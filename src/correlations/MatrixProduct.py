@@ -63,10 +63,15 @@ class ProductOfAdjacencyMatrices(list):
         D=D*self.diagonal *len(self)   
         return P-D
         
-    def matrix_transitivity(self,A):
-        # Transitivity of a Matrix A
-        T=A.multiply(A**2)
-        return float(T.nnz)/float((A**2).nnz)
+    def matrix_transitivity(self,M):
+        # Transitivity of a Matrix M
+        T=M.multiply(M**2)
+        return float(T.nnz)/float((M**2).nnz)
+
+    def bool_int_matrix(self,M):
+        """ Returns matrix with only np.int64: ones. """
+        M=M.astype('bool')
+        M=M.astype('i')
     
     def power_method(self):
         """ Multiplies a random vector with all matrices in self.
@@ -84,72 +89,99 @@ class ProductOfAdjacencyMatrices(list):
             print norm2
             results[i]=norm2,gwh.the_fle(x)
         return results
-            
-    
-    def full_product_matrix(self):
+                
+    def full_product_matrix(self,return_path_matrix=True,return_transitivity=True):
         P=self[0].copy()
-        #for A in self[1:]:
-        #    P*=A
-        for i in range(1,len(self)):
-            print 'full product iteration',i,'non-zeros: ',P.nnz
-            P=P*self[i]
-        return P
+        cumu=[0]
+        trans=[0.0]
+
+        if return_transitivity: 
+            for i in range(1,len(self)):
+                print 'full product iteration',i,'non-zeros: ',P.nnz
+                cumu.append(P.nnz)
+                try:
+                    trans.append(self.matrix_transitivity(P))
+                except MemoryError:
+                    print 'Excepted Memory Error.'
+                    break
+                    
+                P=P*self[i]
+            
+            if return_path_matrix:
+                P = P.astype('bool')
+                P = P.astype('int')    
+                return P,cumu,trans
+            else:
+                return cumu,trans
+        else:
+            for i in range(1,len(self)):
+                print 'full product iteration',i,'non-zeros: ',P.nnz
+                cumu.append(P.nnz)
+                #trans.append(self.matrix_transitivity(P))
+                P=P*self[i]
+            
+            if return_path_matrix:
+                P = P.astype('bool')
+                P = P.astype('int')    
+                return P,cumu#,trans
+            else:
+                return cumu#,trans        
         
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
         
-    def write_large_dense_matrix(self,A,nameoffile='matrix.txt'):
-        # Write sparse matrix to textfile
-        writer=csv.writer(open(nameoffile,"wb"))
-        for i in xrange(n):
-            pass
-        
-        #writer=csv.writer(open(nameoffile,"wb"))
-        #indices=zip(A.nonzero()[0],A.nonzero()[1])
-        #for i,j in indices:
-        #    writer.writerow([i,j,A[i,j]])        
-        
-        #g=file(nameoffile,'w+')
-        #for i,j in A.nonzero():
-        #   g.writelines((str(i),'\t',str(j),'\t',str(A[i,j]),'\n'))
-        #g.close
-        
     def matrix_generation(self,generator,size,**prms):
         for i in range(size):
             self.append(nx.to_scipy_sparse_matrix(generator(**prms)))
+ 
         
-def write_large_dense_matrix(A,fname='matrix.txt'):
-    """ writes dense matrix to text file
-    
-    """
-    n=A.shape[0]
-    writer=csv.writer(open(fname,"wb"))
-    for i in xrange(n):
-        for j in xrange(n):
-            writer.writerow([i,j,A[i,j]])
-        print i
+                      
+def cdf2histogram(c_in):
+    """ Reads cdf and returns histogram. """
+    if isinstance(c_in,list):
+        c=c_in
+    else:
+        c=loadtxt("Shortest_Path_cdf.txt",dtype=int,usecols=(1,))
+        
+    h=[]
+    h.append(c[0])
+    for i in range(1,len(c)):
+        h.append(c[i]-c[i-1])
+    return h
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
-    At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2),matr_type='dok')
+    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2),matr_type='dok')
+    #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
+    #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
+    At=AdjMatrixSequence("Data/sexual_contacts.dat")
+    At.as_undirected()
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),matr_type='dok')
     #C=At.cumulated()
     
+    #print len(At),At[0].shape
+
     print 'Matrixsequenz eingelesen'
     Z=ProductOfAdjacencyMatrices(At)
     print 'Produkt-Objekt erzeugt'
-    gc.collect()
         
-    P=Z.full_product_matrix()
-    gc.collect()
+    P,c=Z.full_product_matrix(return_path_matrix=True,return_transitivity=False)
+    h=cdf2histogram(c)
     
-    print 'Schreibe'
-    print type(P)
-    print P.dtype
+    print 'Schreibe', P.nnz
+    gwh.dict2file(c,"Cumu_edges.txt")
+    gwh.dict2file(h,"histo.txt")
+    #gwh.dict2file(t,"Transitivity.txt")
     
-    writer=csv.writer(open('matrix.txt',"wb"))
-    for i,j in itertools.izip(P.nonzero()[0],P.nonzero()[1]):
-        writer.writerow([i,j,P[i,j]])
+    #out=P.sum(1)
+    #inn=P.sum(0)
+    #mmwrite("Vir.mtx",out)
+    #mmwrite("Vul.mtx",inn)
+    mmwrite("sexual_PathMatrix.mtx",P)
+    """try:
+        mmwrite("Cumulated.mtx",Cumu)
+    except:
+        savemat("Cumulated.mat",{'C':Cumu})"""
 
 
 

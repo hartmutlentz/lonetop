@@ -196,16 +196,6 @@ class AdjMatrixSequence(list):
         for i in range(len(self)):
             self[i]=self.symmetrize_matrix(self[i])
 
-    def clustering_matrix2vector(in_file):
-        C=mmread(in_file)
-        C=sp.lil_matrix(C)
-        x=[0.0 for i in range(C.shape[0])]
-        
-        indices=zip(C.nonzero()[0],C.nonzero()[1])
-        for i,j in indices:
-            x[i+j] += C[i,j]
-        return x
-
     def clustering_matrix(self,limit=None):
         """ Computes the matrix of clustering coefficients of a matrix sequence.
         
@@ -214,18 +204,20 @@ class AdjMatrixSequence(list):
             n=limit
         else:
             n=len(self)
-            
-        C=sp.lil_matrix((n,n),dtype='int')
+        anzahl=n*(n-1)*(n-2)/6    
+        C=lil_matrix((n,n),dtype='float')
         
         # Coefficients
         for i in range(n):
-            print "i=",i
+            print "i=",i, " of ",n
             for j in range(i+1,n):
                 for k in range(j+1,n):
                     a3=self[i]*self[j]*self[k]
                     clu=(a3.diagonal()).sum()
                     clu_norm=a3.sum()
-                    C[j-i,k-j] += float(clu)/clu_norm
+                    if clu_norm>0.0:
+                        #print clu,clu_norm
+                        C[j-i,k-j] += clu/clu_norm
         return C
 
     def matricesCreation(self):
@@ -270,17 +262,18 @@ if __name__ == "__main__":
     from pprint import pprint
     import tools.Gewindehammer as gwh
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
-    #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
-    At=AdjMatrixSequence("Data/sexual_contacts.dat")
+    At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
     At.as_undirected()
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,3))
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"))
     print 'Alle: ',len(At)
-    Cumu=At.cumulated()
-    try:
-        mmwrite("Cumulated.mtx",Cumu)
-    except:
-        savemat("Cumulated.mat",{'C':Cumu})
+    C=At.clustering_matrix(limit=2000)
+    mmwrite("Clusteringmatrix.mtx",C)
+    #Cumu=At.cumulated()
+    #try:
+    #    mmwrite("Cumulated.mtx",Cumu)
+    #except:
+    #    savemat("Cumulated.mat",{'C':Cumu})
     
     #x=At.daily_activity()
     #gwh.dict2file(x,"daily_activity.txt")
