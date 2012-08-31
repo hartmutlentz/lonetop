@@ -92,6 +92,7 @@ class ProductOfAdjacencyMatrices(list):
                 
     def full_product_matrix(self,return_path_matrix=True,return_transitivity=True):
         P=self[0].copy()
+        B=sp.csr_matrix((self.number_of_nodes,self.number_of_nodes))
         cumu=[0]
         trans=[0.0]
 
@@ -119,13 +120,14 @@ class ProductOfAdjacencyMatrices(list):
                 cumu.append(P.nnz)
                 #trans.append(self.matrix_transitivity(P))
                 P=P*self[i]
+                B=(P.astype('bool')-B.astype('bool'))*i + B
             
             if return_path_matrix:
                 P = P.astype('bool')
                 P = P.astype('int')    
                 return P,cumu#,trans
             else:
-                return cumu#,trans        
+                return B,cumu#,trans
         
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
@@ -151,11 +153,11 @@ def cdf2histogram(c_in):
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
-    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2),matr_type='dok')
+    At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2))
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
-    At=AdjMatrixSequence("Data/sexual_contacts.dat")
-    At.as_undirected()
+    #At=AdjMatrixSequence("Data/sexual_contacts.dat")
+    #At.as_undirected()
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),matr_type='dok')
     #C=At.cumulated()
     
