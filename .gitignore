@@ -5,3 +5,5 @@ src/correlations/D-Cumulated.mtx
 *.mtx
 *.txt
 *.pyc
+
+*.pyc

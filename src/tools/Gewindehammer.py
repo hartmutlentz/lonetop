@@ -553,7 +553,21 @@ def cdf(seq,rtn_type='dict',norm=True,bridge_values=False):
         return sort_dict_by_keys(cdf3)
     elif rtn_type=='dict':
         return cdf3
-    
+ 
+def cdf2histogram(c_in):
+    """ Reads cdf and returns histogram. """
+    if isinstance(c_in,list):
+        c=c_in
+    else:
+        c=loadtxt("Shortest_Path_cdf.txt",dtype=int,usecols=(1,))
+        
+    h=[]
+    h.append(c[0])
+    for i in range(1,len(c)):
+        h.append(c[i]-c[i-1])
+    return h
+
+
 def graph2dot(G,f_name='Graph.dot'):
     """ Write a (DiGraph) into a dot file <f_name>.dot
     """

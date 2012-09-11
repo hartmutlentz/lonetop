@@ -89,10 +89,29 @@ class ProductOfAdjacencyMatrices(list):
             print norm2
             results[i]=norm2,gwh.the_fle(x)
         return results
+        
+    def floyd_warshall_temporal(self,start=1,end=None):
+        """ Temporal Floyd-Warshall Algorithm.
+            Returns distance matrix
+        """
+        B=sp.csr_matrix((self.number_of_nodes,self.number_of_nodes))
+        P=self[0].copy()
+        
+        i_start=start
+        if end:
+            i_end=end
+        else:
+            i_end=len(self)
+            
+        for i in range(i_start,i_end):
+            print 'Floyd Warshall. Iteration.',i,' of ',i_end
+            P=P*self[i]
+            B=(P.astype('bool')-B.astype('bool'))*i + B
+            
+        return B
                 
     def full_product_matrix(self,return_path_matrix=True,return_transitivity=True):
         P=self[0].copy()
-        B=sp.csr_matrix((self.number_of_nodes,self.number_of_nodes))
         cumu=[0]
         trans=[0.0]
 
@@ -118,16 +137,14 @@ class ProductOfAdjacencyMatrices(list):
             for i in range(1,len(self)):
                 print 'full product iteration',i,'non-zeros: ',P.nnz
                 cumu.append(P.nnz)
-                #trans.append(self.matrix_transitivity(P))
                 P=P*self[i]
-                B=(P.astype('bool')-B.astype('bool'))*i + B
             
             if return_path_matrix:
                 P = P.astype('bool')
                 P = P.astype('int')    
-                return P,cumu#,trans
+                return P,cumu
             else:
-                return B,cumu#,trans
+                return cumu
         
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
@@ -137,19 +154,6 @@ class ProductOfAdjacencyMatrices(list):
             self.append(nx.to_scipy_sparse_matrix(generator(**prms)))
  
         
-                      
-def cdf2histogram(c_in):
-    """ Reads cdf and returns histogram. """
-    if isinstance(c_in,list):
-        c=c_in
-    else:
-        c=loadtxt("Shortest_Path_cdf.txt",dtype=int,usecols=(1,))
-        
-    h=[]
-    h.append(c[0])
-    for i in range(1,len(c)):
-        h.append(c[i]-c[i-1])
-    return h
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
@@ -168,7 +172,7 @@ if __name__=="__main__":
     print 'Produkt-Objekt erzeugt'
         
     P,c=Z.full_product_matrix(return_path_matrix=True,return_transitivity=False)
-    h=cdf2histogram(c)
+    h=gwh.cdf2histogram(c)
     
     print 'Schreibe', P.nnz
     gwh.dict2file(c,"Cumu_edges.txt")
