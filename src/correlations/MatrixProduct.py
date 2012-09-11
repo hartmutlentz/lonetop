@@ -63,6 +63,21 @@ class ProductOfAdjacencyMatrices(list):
         D=D*self.diagonal *len(self)   
         return P-D
         
+    def time_reversed(self,return_copy=False):
+        """ reverts list and transposes elements
+        
+        """
+        if return_copy: x=self[:]
+        else: x=self
+        
+        for i in range(len(self)):
+            x[i]=x[i].transpose()
+            
+        x.reverse()
+        
+        if return_copy: return x
+        else: return
+        
     def matrix_transitivity(self,M):
         # Transitivity of a Matrix M
         T=M.multiply(M**2)

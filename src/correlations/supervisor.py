@@ -11,12 +11,15 @@ from scipy.io import mmwrite
 
 At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,3))
 print 'Matrixsequenz eingelesen'
-Z=ProductOfAdjacencyMatrices(At)
-print 'Produkt-Objekt erzeugt'
-    
-D=Z.floyd_warshall_temporal()
-print D
-mmwrite("Test.mtx",D)
+print At[0]
+B=At.time_reversed(True)
+print '\n',B[0]
+#Z=ProductOfAdjacencyMatrices(At)
+#print 'Produkt-Objekt erzeugt'
+#    
+#D=Z.floyd_warshall_temporal()
+#print D
+#mmwrite("Test.mtx",D)
 
 
 

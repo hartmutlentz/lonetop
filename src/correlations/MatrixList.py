@@ -182,7 +182,22 @@ class AdjMatrixSequence(list):
         for i in range(len(self)):
             da[i]=float(self[i].nnz)/norma
         
-        return da      
+        return da
+
+    def time_reversed(self,return_copy=False):
+        """ reverts list and transposes elements
+        
+        """
+        if return_copy: x=self[:]
+        else: x=self
+        
+        for i in range(len(self)):
+            x[i]=x[i].transpose()
+            
+        x.reverse()
+        
+        if return_copy: return x
+        else: return
 
     def symmetrize_matrix(self,A):
         """ Returns symmetric version of a non-symm Matrix A as bool-int. """
