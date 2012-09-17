@@ -166,11 +166,16 @@ class AdjMatrixSequence(list):
                     G.add_edge(i,j,attr)
         return G
         
-    def cumulated(self):
+    def cumulated(self,start=0,ende=None):
         """ Returns Cumulted Graph as Matrix """
         C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int64)
-        for matrix in self:
-            C = C+matrix
+        
+        if ende: e=ende
+        else: e=len(self)
+        
+        for i in range(start,e):
+            C = C+self[i]
+        
         return C
         
     def daily_activity(self):
