@@ -166,6 +166,27 @@ class AdjMatrixSequence(list):
                     G.add_edge(i,j,attr)
         return G
         
+    def path_density_of_A(self,A):
+        """ The path density of an Adjacency Matrix A """
+        paths=0
+        n=scipy.shape(A)[0]
+        
+        for i in range(n):
+            out_size=len(sp.csgraph.depth_first_order(A,i,return_predecessors=False))
+            paths += out_size
+            
+        return float(paths)/n**2
+
+    def static_path_density(self):
+        """ Returns dict. {Aggregation depth: static path density}
+        
+        """
+        pd=[]
+        for Cn in self.step_by_step_aggregation():
+            pd.append(path_density_of_A(Cn))
+            
+        return pd
+        
     def step_by_step_aggregation(self,ende=None):
         """ Returns matrix list of all aggregated networks,
             i.e. [A1, A1+A2, A1+A2+A3, ...]
