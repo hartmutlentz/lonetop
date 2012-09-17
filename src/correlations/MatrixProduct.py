@@ -125,7 +125,7 @@ class ProductOfAdjacencyMatrices(list):
             
         return B
                 
-    def full_product_matrix(self,return_path_matrix=True,return_transitivity=True):
+    def full_product_matrix(self,return_path_matrix=True,return_transitivity=True,final_transitivity=False):
         P=self[0].copy()
         cumu=[0]
         trans=[0.0]
@@ -159,7 +159,13 @@ class ProductOfAdjacencyMatrices(list):
                 P = P.astype('int')    
                 return P,cumu
             else:
-                return cumu
+                if final_transitivity:
+                    print 'Computing final Transitivity Matrix...'
+                    finalT=P.multiply(P**2)
+                    print '-> Done.'
+                    return cumu,finalT
+                else:
+                    return cumu
         
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
