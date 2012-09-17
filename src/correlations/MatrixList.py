@@ -166,8 +166,25 @@ class AdjMatrixSequence(list):
                     G.add_edge(i,j,attr)
         return G
         
+    def step_by_step_aggregation(self,ende=None):
+        """ Returns matrix list of all aggregated networks,
+            i.e. [A1, A1+A2, A1+A2+A3, ...]
+        
+        """
+        C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int64)
+        li=[]
+        
+        if ende: e=ende
+        else: e=len(self)
+        
+        for i in range(start,e):
+            C = C+self[i]
+            li.append(C)
+        
+        return li
+        
     def cumulated(self,start=0,ende=None):
-        """ Returns Cumulted Graph as Matrix """
+        """ Returns Cumulated Graph as Matrix """
         C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int64)
         
         if ende: e=ende
