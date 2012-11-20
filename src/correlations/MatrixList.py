@@ -1,6 +1,7 @@
 import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], os.pardir))
 import tools.filesystem as fs
+import tools.Gewindehammer as gwh
 
 from scipy.sparse import coo_matrix, csr_matrix, lil_matrix, dok_matrix
 import scipy.stats
@@ -12,7 +13,7 @@ from collections import defaultdict
 import gc
 import networkx as nx
 from scipy.io import mmread,mmwrite,loadmat,savemat
-
+import random
 
 
 class AdjMatrixSequence(list):
@@ -226,6 +227,45 @@ class AdjMatrixSequence(list):
             da[i]=float(self[i].nnz)/norma
         
         return da
+    
+    def configuration_model(self,directed,return_copy=False):
+        """ Reads AdjMatrixSequence Object and returns an edge randomized version.
+            Result is written to txt file.
+        """
+        if directed:
+            nx_creator=nx.DiGraph()
+        else:
+            nx_creator=nx.Graph()
+
+        if return_copy: x=self[:]
+        else: x=self
+        
+        #t_edges=[]
+        for i in range(len(self)):
+            print "configuration model: ",i
+            graphlet=nx.from_scipy_sparse_matrix(x[i],create_using=nx_creator)
+            graphlet=gwh.randomize_network(graphlet)
+            x[i]=nx.to_scipy_sparse_matrix(graphlet,dtype='int')
+            #for u,v in graphlet.edges():
+            #    t_edges.append((u,v,i))
+
+        #gwh.write_array(t_edges,"Configuration_model.txt")
+    
+        if return_copy: return x
+        else: return
+
+    def time_shuffled(self,return_copy=False):
+        """
+        
+        """
+        if return_copy: x=self[:]
+        else: x=self
+    
+        random.shuffle(x)
+
+        if return_copy: return x
+        else: return
+
 
     def time_reversed(self,return_copy=False):
         """ reverts list and transposes elements
@@ -286,6 +326,19 @@ class AdjMatrixSequence(list):
                     C[j-i,k-j] += float(clu)/clu_norm
         return C
 
+    def write_edgelist(self,fname):
+        """ writes self to txtfile
+            
+        """
+        t_edges=[]
+        for i in range(len(self)):
+            graphlet=nx.from_scipy_sparse_matrix(As[i],create_using=nx_creator)
+            for u,v in graphlet.edges():
+                t_edges.append((u,v,i))
+        
+        gwh.write_array(t_edges,fname)
+        return
+
     def matricesCreation(self):
         """ creates list of sparse matrices from input file """
         edges = loadtxt(self.fname, dtype=int, usecols=self.cols)
@@ -326,19 +379,21 @@ class AdjMatrixSequence(list):
             
 if __name__ == "__main__":
     from pprint import pprint
-    import tools.Gewindehammer as gwh
+    
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
-    At=AdjMatrixSequence("Data/sexual_contacts.dat")
-    At.as_undirected()
+    #At=AdjMatrixSequence("Data/sexual_contacts.dat")
+    #At.as_undirected()
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,3))
-    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"))
+    At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"))
     print 'Alle: ',len(At)
-    Cumu=At.cumulated()
-    try:
-        mmwrite("Cumulated.mtx",Cumu)
-    except:
-        savemat("Cumulated.mat",{'C':Cumu})
+    At.configuration_model(True)
+
+    #Cumu=At.cumulated()
+    #try:
+    #    mmwrite("Cumulated.mtx",Cumu)
+    #except:
+    #    savemat("Cumulated.mat",{'C':Cumu})
     
     #x=At.daily_activity()
     #gwh.dict2file(x,"daily_activity.txt")

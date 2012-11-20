@@ -7,7 +7,7 @@
 #  Copyright (c) 2008 __MyCompanyName__. All rights reserved.
 #
 # Packages (Mac OS X): /Library/Python/2.5/site-packages
-import math,random,string,pprint,numpy,scipy,scipy.sparse
+import math,random,string,pprint,numpy,scipy,scipy.sparse,csv
 from scipy.linalg import norm as scipynorm
 
 import networkx as nx
@@ -15,7 +15,7 @@ try:
     from my_pool import ListPool
 except:
     pass
-
+    
 class MessReihe():
     """ MessReihe is an environment for Multi-CPU computations of a
         function func. The parameter intervall is given at init.
@@ -112,6 +112,31 @@ def read_file2(filename,delimiter='\t'):
         line=file_tab.readline()
     file_tab.close()            
     return data
+
+def hitcode_bundesland(revert=False):
+    """ dict with HIT codes for Bundesland
+        HIT Code: 276+01+Nummer=D+SH+Nummer
+    """
+    d={}
+    d["01"]="SH" # Schleswig-H.
+    d["02"]="HH"
+    d["03"]="NI"
+    d["04"]="HB"
+    d["05"]="NW"
+    d["06"]="HE"
+    d["07"]="RP"
+    d["08"]="BW"
+    d["09"]="BY"
+    d["10"]="SL"
+    d["11"]="BE"
+    d["12"]="BB"
+    d["13"]="MV"
+    d["14"]="SN" # Sachsen
+    d["15"]="ST" # Sachsen-Anhalt
+    d["16"]="TH"
+    
+    if revert: return revert_dictionary(d,True)
+    else: return d
     
 def data_minus_1(data):
     """
@@ -199,6 +224,87 @@ def histogram(seq):
 def highest_digraph_degree(G,degr='out',rtrn_type='node'):
     return maximum_degree(G,degr='out',rtrn_type='node')
     
+def multi_and_parallel_edges(G):
+    """ Return Multiedges and Selfloops of a Multi(Di)Graph
+        
+    """
+    edges=G.edges()
+    dups = [x for x in edges if edges.count(x) > 1]
+    
+    to_move=set(dups)
+    sloops=G.selfloop_egdes()
+    
+    return to_move.union(sloops)            
+        
+def randomize_network(G_in):
+    """ Converts network input network into graph sequence and
+        generates new configuration graph.
+    """
+    if G_in.is_directed():
+        inseq=G_in.in_degree().values()
+        outseq=G_in.out_degree().values()
+        
+        H=nx.directed_configuration_model(inseq,outseq)
+        H=nx.DiGraph(H)
+        H.remove_edges_from(H.selfloop_edges())
+    
+    else:
+        seq=G_in.degree().values()
+        
+        H=nx.configuration_model(seq)
+        H=nx.Graph(H)
+        H.remove_edges_from(H.selfloop_edges())
+    
+    #print "Configuration model --- Edges: input: ",G_in.number_of_edges(),\
+    #" output: ", H.number_of_edges()
+    
+    return H
+
+def randomize_network_slow(G_in):
+    """
+        Returns a randomized version of a graph or digraph.
+        The degree sequence is conserved.
+        needs packages: random, networkx
+        Slow!
+    """
+    
+    G=G_in.copy()
+    iterations=G.number_of_edges()
+        
+    def get_legal_edgepair(ed):
+        # returns a disjoint pair of edges
+        def the_condition(fi,se):
+            # condition for disjoint edges
+            if fi[0]==fi[1] or se[0]==se[1]\
+            or fi[0]==se[0] or fi[0]==se[1]\
+            or fi[1]==se[0] or fi[1]==se[1]:
+                return True
+            else: return False
+        
+        first=random.choice(edges)
+        second=random.choice(edges)
+        while the_condition(first,second)==True:
+            first=random.choice(edges)
+            second=random.choice(edges)
+        return (first,second)
+	
+    # switch edges
+    for i in range(iterations):
+        edges=G.edges()
+        while True:
+            x, y = get_legal_edgepair(edges)
+            if G.has_edge(x[0],y[1])==False\
+            and G.has_edge(y[0],x[1])==False:
+                break
+        
+        G.remove_edge(x[0],x[1])
+        G.remove_edge(y[0],y[1])
+        G.add_edge(x[0],y[1])
+        G.add_edge(y[0],x[1])
+        print 'remaining: ', iterations-i
+    
+    return G
+
 def maximum_degree(G,degr='out',rtrn_type='tupel'):
     """
     Input: (Di)Graph G, 
@@ -345,18 +451,46 @@ def sort_list_by_length(lis):
         return len(a)-len(b)
     lis.sort(cmp,reverse=True)
     
-def file2dict(file,sep='\t',datatype='int',key_col=1,val_col=2):
+def file2dict_var(file,datatypes=('int','float'),key_col=0,val_col=1):
+    """ reads file and returns dict.
+        Key and value columns can be of different types
+    """
+    x=numpy.loadtxt(file,dtype={'names':('1','2'),'formats':(datatypes[0],datatypes[1])},usecols=(key_col,val_col))
+    
+    x_dict={}
+    for i in range(len(x)):
+        x_dict[x[i][0]]=x[i][1]
+
+    return x_dict
+
+def file2dict(file,sep='\t',datatype='int',key_col=0,val_col=1):
     """ reads file and returns dict. 
         Datatypes: int, float or string
     """ 
     d=read_file(file,sep)
     if datatype=='int': string2int_data(d)
     elif datatype=='float': string2float_data(d)
+    elif datatype=='string': pass
+    else:
+        raise Exception, 'file2dict: invalid datatype' 
+
     di={}
     for i in range(len(d)):
-        di[d[i][key_col-1]]=d[i][val_col-1]
+        di[d[i][0]]=d[i][1]
     
     return di
+
+def is_symmetric_matrix(M):
+    """ Returns True, if M is symmetrix
+    """
+    return M==M.transpose()
+    
+def fast_write_matrix(A,nameoffile='matrix.txt'):
+    #
+    writer=csv.writer(open(nameoffile,"wb"))
+    indices=zip(A.nonzero()[0],A.nonzero()[1])
+    for i,j in indices:
+        writer.writerow([i,j,A[i,j]])
     
 def write_sparse_matrix(A,nameoffile='matrix.txt'):
     # Write sparse matrix to textfile
@@ -365,6 +499,21 @@ def write_sparse_matrix(A,nameoffile='matrix.txt'):
     g=file(nameoffile,'w+')
     for k in indices:
         g.writelines((str(k[0]),'\t',str(k[1]),'\t',str(A[k]),'\n'))
+    g.close
+
+def array2file(x,f):
+    write_array(x,f)
+    
+def write_array(arr,fname='array.txt'):
+    """ Writes iterable object to file as it is.
+        That is, each element i is written as str(i).
+    
+    """
+    g=file(fname,'w+')
+    for i in range(len(arr)):
+        wstring=''
+        for j in range(1,len(arr[i])): wstring += '\t'+str(arr[i][j])
+        g.writelines(( str(arr[i][0])+wstring+'\n' ))        
     g.close
            
 def dict2file(d,nameoffile='dict.txt',sorted=True):
@@ -390,7 +539,7 @@ def dict2file(d,nameoffile='dict.txt',sorted=True):
     
     # if d={ 1: [a,b,c,...], 2:[d,e,f,...],... }
     s=d.values()[0]
-    if isinstance(s,dict) or isinstance(s,list) or isinstance(s,tuple):
+    if isinstance(s,dict) or isinstance(s,list) or isinstance(s,tuple) or isinstance(s,numpy.ndarray):
         laenge=len(d.values()[0])
         g=file(nameoffile,'w+')
         for k in dk:
@@ -553,7 +702,7 @@ def cdf(seq,rtn_type='dict',norm=True,bridge_values=False):
         return sort_dict_by_keys(cdf3)
     elif rtn_type=='dict':
         return cdf3
- 
+
 def cdf2histogram(c_in):
     """ Reads cdf and returns histogram. """
     if isinstance(c_in,list):
@@ -566,7 +715,6 @@ def cdf2histogram(c_in):
     for i in range(1,len(c)):
         h.append(c[i]-c[i-1])
     return h
-
 
 def graph2dot(G,f_name='Graph.dot'):
     """ Write a (DiGraph) into a dot file <f_name>.dot
@@ -723,6 +871,32 @@ def powerdev_pos_float(alf):
     x=math.sin(alf*v)/(cos(v))**(1.0/alf)*(cos(v-alf*v)/w)**((1.0-alf)/alf)
     return abs(x) 
 
+def matrix_friendly_node_labels_text(fname,outfile,mapfile='node_labels.txt'):
+    """ Reads textfile (edgelist) and returns file
+        with new node labels ranging 0,...,n.
+    """
+    x=read_file(fname,datatype=int)
+    
+    # ordered list of nodes
+    nodes=set()
+    for line in x:
+        nodes.add(line[0])
+        nodes.add(line[1])
+    ordered_nodes=list(nodes)
+    ordered_nodes.sort()
+    
+    # new labels
+    new={}
+    for i in range(len(ordered_nodes)):
+        new[ordered_nodes[i]]=i
+    dict2file(new,mapfile)
+    
+    # new edgelist
+    y=[[new[line[0]],new[line[1]],line[2]] for line in x]
+    write_array(y,outfile)
+    
+    return
+        
 def matrix_friendly_node_labels(G,return_mapping=False):
     """ Returns (Di)Graph with nodes labelled 0,1,2,3,...
         Good for matrix representations.
@@ -2496,4 +2670,13 @@ def newman_modularity_Q(G,partition):
         q = q/2.0/m
     
     return q
+
+if __name__=="__main__":
+    filestring="/Users/lentz/Desktop/Static-Analysis/Cumulated.mtx"
+    G=nx.read_edgelist(filestring,create_using=nx.DiGraph(),data=False)
+    #G=nx.erdos_renyi_graph(100000,0.00003)
     
+    print "Generated"
+    X=randomize_network(G)
+    print X.number_of_edges(),G.number_of_edges()
+

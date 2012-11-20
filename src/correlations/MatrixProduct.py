@@ -63,6 +63,16 @@ class ProductOfAdjacencyMatrices(list):
         D=D*self.diagonal *len(self)   
         return P-D
         
+    def transpose(self):
+        """
+        """
+        if return_copy: x=self[:]
+        else: x=self
+        
+        for i in range(len(self)):
+            yield x[i].transpose()
+            
+        
     def time_reversed(self,return_copy=False):
         """ reverts list and transposes elements
         
@@ -98,7 +108,7 @@ class ProductOfAdjacencyMatrices(list):
         for i in range(len(self)):
             print i
             #norm1=np.linalg.norm(x)
-            x=self[i]*x
+            x=(self[i].transpose())*x
             norm2=np.linalg.norm(x)
             
             print norm2

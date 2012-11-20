@@ -6,3 +6,5 @@ src/correlations/D-Cumulated.mtx
 *.txt
 *.pyc
 
+
+src/tools/Gewindehammer.pyc
