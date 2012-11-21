@@ -31,7 +31,7 @@ class AdjMatrixSequence(list):
     nodes are reindexed to [0..number_of_nodes]
     """
 
-    def __init__(self, edgelist_fname,write_label_file=False,columns=(0,1,2),firstday=None,lastday=None):
+    def __init__(self,edgelist_fname,directed,write_label_file=False,columns=(0,1,2),firstday=None,lastday=None):
         list.__init__(self)
         #if edgelist_fname == fs.dataPath("D_sf_uvwd_cmpl.txt"):
         #    self.first_day = 2555 #2008-2010
@@ -43,8 +43,10 @@ class AdjMatrixSequence(list):
         self.fname = edgelist_fname
         self.cols=columns
         self.label_file = write_label_file
+        self.is_directed=directed
         
         self.matricesCreation()
+        if self.is_directed==False: self.as_undirected()
         self.number_of_nodes=scipy.shape(self[0])[0]
 
     def groupByDays(self, edges):
@@ -329,12 +331,13 @@ class AdjMatrixSequence(list):
     def write_edgelist(self,fname):
         """ writes self to txtfile
             
-        """
+        """        
         t_edges=[]
         for i in range(len(self)):
-            graphlet=nx.from_scipy_sparse_matrix(As[i],create_using=nx_creator)
-            for u,v in graphlet.edges():
-                t_edges.append((u,v,i))
+            print i
+            indices=zip(self[i].nonzero()[0],self[i].nonzero()[1])
+            to_add=[(u,v,i) for u,v in indices]
+            t_edges.extend(to_add)
         
         gwh.write_array(t_edges,fname)
         return
@@ -384,10 +387,13 @@ if __name__ == "__main__":
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
     #At=AdjMatrixSequence("Data/sexual_contacts.dat")
     #At.as_undirected()
-    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,3))
-    At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"))
+    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3))
+    At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True)
+    
     print 'Alle: ',len(At)
-    At.configuration_model(True)
+    At.write_edgelist(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010_matrixlabels.txt"))
+    
+    #At.configuration_model(True)
 
     #Cumu=At.cumulated()
     #try:
