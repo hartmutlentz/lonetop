@@ -8,3 +8,5 @@ src/correlations/D-Cumulated.mtx
 
 
 src/tools/Gewindehammer.pyc
+
+*.dat

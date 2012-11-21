@@ -2,6 +2,7 @@ import sys, os
 sys.path.insert(1, os.path.join(sys.path[0], os.pardir))
 import tools.filesystem as fs
 import tools.Gewindehammer as gwh
+from tools.TemporalEdgeList import TemporalEdgeList
 
 from scipy.sparse import coo_matrix, csr_matrix, lil_matrix, dok_matrix
 import scipy.stats
@@ -230,11 +231,11 @@ class AdjMatrixSequence(list):
         
         return da
     
-    def configuration_model(self,directed,return_copy=False):
+    def configuration_model(self,return_copy=False):
         """ Reads AdjMatrixSequence Object and returns an edge randomized version.
             Result is written to txt file.
         """
-        if directed:
+        if self.is_directed:
             nx_creator=nx.DiGraph()
         else:
             nx_creator=nx.Graph()
@@ -329,17 +330,26 @@ class AdjMatrixSequence(list):
         return C
 
     def write_edgelist(self,fname):
-        """ writes self to txtfile
+        """ writes self to txtfile.
+            If network is undirected, edge-pairs appear twice.
             
         """        
         t_edges=[]
         for i in range(len(self)):
-            print i
+            print "extracting edges ",i
             indices=zip(self[i].nonzero()[0],self[i].nonzero()[1])
             to_add=[(u,v,i) for u,v in indices]
             t_edges.extend(to_add)
         
-        gwh.write_array(t_edges,fname)
+        t_edges_clean=t_edges[:]
+        if not self.is_directed:
+            print "cleaning edgelist..."
+            for (u,v,d) in t_edges_clean:
+                if (v,u,d) in t_edges_clean:
+                    t_edges_clean.remove((v,u,d))
+        
+        print "writing edgelist..."
+        gwh.write_array(t_edges_clean,fname)
         return
 
     def matricesCreation(self):
@@ -379,19 +389,25 @@ class AdjMatrixSequence(list):
             m = csr_matrix((bs,(us,vs)), shape=(mx_index, mx_index), dtype=np.int32)
             self.append(m)
             
-            
 if __name__ == "__main__":
     from pprint import pprint
     
-    #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
-    #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
-    #At=AdjMatrixSequence("Data/sexual_contacts.dat")
+    #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
+    #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
+    #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=True)
     #At.as_undirected()
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3))
-    At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True)
+    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True)
+
+    E=TemporalEdgeList(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
+    print E.snapshots
+
+    #print 'Alle: ',len(At)
+    #A=At.cumulated()
+    #print A.nnz
     
-    print 'Alle: ',len(At)
-    At.write_edgelist(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010_matrixlabels.txt"))
+    #At.write_edgelist(
+    #fs.dataPath("sociopatterns_hypertext_social_ijt_matrixlabels.dat"))
     
     #At.configuration_model(True)
 
