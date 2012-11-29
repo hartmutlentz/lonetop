@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#! /usr/bin/python
 #
 import sys,os
 sys.path.append('/Users/lentz/Documents/Physik/my_py') # Mac
@@ -188,7 +188,7 @@ class ProductOfAdjacencyMatrices(list):
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
-    At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2))
+    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2))
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
     #At=AdjMatrixSequence("Data/sexual_contacts.dat")
@@ -197,6 +197,7 @@ if __name__=="__main__":
     #C=At.cumulated()
     
     #print len(At),At[0].shape
+    At=AdjMatrixSequence("Randomized/Randomized_edges.txt",directed=False)
 
     print 'Matrixsequenz eingelesen'
     Z=ProductOfAdjacencyMatrices(At)
@@ -214,11 +215,7 @@ if __name__=="__main__":
     #inn=P.sum(0)
     #mmwrite("Vir.mtx",out)
     #mmwrite("Vul.mtx",inn)
-    mmwrite("sexual_PathMatrix.mtx",P)
-    """try:
-        mmwrite("Cumulated.mtx",Cumu)
-    except:
-        savemat("Cumulated.mat",{'C':Cumu})"""
+    #mmwrite("sexual_PathMatrix.mtx",P)
 
 
 

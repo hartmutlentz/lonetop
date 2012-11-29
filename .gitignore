@@ -10,3 +10,11 @@ src/correlations/D-Cumulated.mtx
 src/tools/Gewindehammer.pyc
 
 *.dat
+
+src/correlations/Cumu_edges.txt
+
+src/correlations/histo.txt
+
+*.pyc
+
+src/correlations/matrixlist.pyc
