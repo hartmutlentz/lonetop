@@ -187,6 +187,7 @@ class TemporalEdgeList():
         prob=self.average_size()/len(self.static_edges)
         #print prob
         for i in range(self.mintime,self.maxtime):
+            print "Random times uniform. Step ",i," of ",self.maxtime
             edges=[]
             for e in self.static_edges:
                 if random.random()<prob:
@@ -205,6 +206,7 @@ class TemporalEdgeList():
         sizes=[len(self.snapshots[i]) for i in self.snapshots]
         random.shuffle(sizes)
         for i in range(self.maxtime+1):
+            #print "Random times. Step ",i," of ",self.maxtime+1
             edges=[]
             for j in range(sizes[i]):
                 edges.append(random.choice(self.static_edges))
