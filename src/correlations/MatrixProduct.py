@@ -197,20 +197,25 @@ if __name__=="__main__":
     #C=At.cumulated()
     
     #print len(At),At[0].shape
-    At=AdjMatrixSequence("Randomized/Randomized_edges.txt",directed=False)
-
-    print 'Matrixsequenz eingelesen'
-    Z=ProductOfAdjacencyMatrices(At)
-    print 'Produkt-Objekt erzeugt'
+    path='Randomized-sexual/'
+    listing=os.listdir(path)
+    for infile in listing:
+        At=AdjMatrixSequence("Randomized-sexual/"+infile,directed=False)
+        print 'Matrixsequenz eingelesen'
+    
+        Z=ProductOfAdjacencyMatrices(At)
+        print 'Produkt-Objekt erzeugt'
+            
+        c=Z.full_product_matrix(return_path_matrix=False,return_transitivity=False)
+        h=gwh.cdf2histogram(c)
         
-    P,c=Z.full_product_matrix(return_path_matrix=True,return_transitivity=False)
-    h=gwh.cdf2histogram(c)
-    
-    print 'Schreibe', P.nnz
-    gwh.dict2file(c,"Cumu_edges.txt")
-    gwh.dict2file(h,"histo.txt")
+        print 'Schreibe', P.nnz
+        gwh.dict2file(c,"Randomized-sexual/"+infile+"_Cumu_edges.txt")
+        gwh.dict2file(h,"Randomized-sexual/"+infile+"_histo.txt")
+
+
+
     #gwh.dict2file(t,"Transitivity.txt")
-    
     #out=P.sum(1)
     #inn=P.sum(0)
     #mmwrite("Vir.mtx",out)
