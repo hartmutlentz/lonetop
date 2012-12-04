@@ -209,7 +209,7 @@ if __name__=="__main__":
         c=Z.full_product_matrix(return_path_matrix=False,return_transitivity=False)
         h=gwh.cdf2histogram(c)
         
-        print 'Schreibe', P.nnz
+        #print 'Schreibe', P.nnz
         gwh.dict2file(c,"Randomized-sexual/"+infile+"_Cumu_edges.txt")
         gwh.dict2file(h,"Randomized-sexual/"+infile+"_histo.txt")
 

@@ -400,6 +400,8 @@ if __name__ == "__main__":
     #At.time_reversed()
     #At.time_shuffled()
     #At.write("Randomized/Time_reversed.txt")
+    #den=At.density()
+    #gwh.dict2file(den,"density.txt")
 
     #E=TemporalEdgeList(fs.dataPath("T_edgelist.txt"),directed=True,timecolumn=3)
     #E=TemporalEdgeList(fs.dataPath("sexual_contacts.dat"),directed=False)
