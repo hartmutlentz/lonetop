@@ -29,12 +29,20 @@ class LeslieSequence(list):
         list.__init__(self)
         
         self.extend(matrices)
+        self.__transpose()
+        
         self.number_of_nodes=self[0].shape[0]
         self.age_classes=tau
         self.max_dimension=self.age_classes*self.number_of_nodes
         
         self.shape_matrices=self.__get_shape_matrices()
-            
+
+    def __transpose(self):
+        """ Transpose all matrices in self """
+        for M in self:
+            M=M.transpose()
+        return
+    
     def __get_shape_matrices(self):
         # Leslie age-based matrix shapes
         eye=sp.eye(self.age_classes,self.age_classes,-1)
@@ -42,6 +50,11 @@ class LeslieSequence(list):
         for j in range(self.age_classes):
             top[0,j]=True
         return top,eye
+
+    def bool_int_matrix(self,M):
+        """ Returns matrix with only np.int64: ones. """
+        M=M.astype('bool')
+        M=M.astype('i')
 
     def leslie_matrix(self,M):
         """ Returns the Leslie Matrix of a given Matrix M """
@@ -84,6 +97,7 @@ class LeslieSequence(list):
             recovered.append(old_recovered+new_recovered)
 
             if recovered==self.number_of_nodes: break
+            if state.nnz==0: break
         
         return outbreak_size, recovered
 
@@ -110,7 +124,7 @@ class LeslieSequence(list):
         
 
 if __name__=="__main__":
-    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2),directed=True)
+    At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,3),directed=True)
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat",directed=False)
     #At=AdjMatrixSequence("Data/sexual_contacts.dat")
@@ -118,8 +132,8 @@ if __name__=="__main__":
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),matr_type='dok')
     print 'Matrixsequenz eingelesen',len(At)
 
-    L=LeslieSequence(At,tau=4)
-    infected,recovered=L.outbreak()
+    L=LeslieSequence(At,tau=3)
+    infected,recovered=L.outbreak(initial_nodes=(1,))
     print infected,recovered
         
     #c=Z.unfold_accessibility(return_accessibility=False)
