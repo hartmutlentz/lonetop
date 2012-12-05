@@ -39,8 +39,8 @@ class LeslieSequence(list):
 
     def __transpose(self):
         """ Transpose all matrices in self """
-        for M in self:
-            M=M.transpose()
+        for i in range(len(self)):
+            self[i]=self[i].transpose()
         return
     
     def __get_shape_matrices(self):
@@ -87,17 +87,20 @@ class LeslieSequence(list):
         state=self.initial_state(initial_nodes)
         outbreak_size=[state.nnz]
         recovered=[0]
+        print 'init state\n',state
         
         for i in range(len(self)):
             state=self.leslie_matrix(self[i])*state
             outbreak_size.append(state.nnz)
-            
+            print 'Step ',i+1,'\n',state
             new_recovered=self.oldest_in_x(state)
             old_recovered=recovered[-1]
             recovered.append(old_recovered+new_recovered)
 
             if recovered==self.number_of_nodes: break
             if state.nnz==0: break
+        # if no steady state reached
+        #recovered.append(state.nnz-self.oldest_in_x(state))
         
         return outbreak_size, recovered
 
