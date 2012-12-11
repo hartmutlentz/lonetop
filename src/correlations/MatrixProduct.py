@@ -134,49 +134,37 @@ class ProductOfAdjacencyMatrices(list):
             B=(P.astype('bool')-B.astype('bool'))*i + B
             
         return B
-                
-    def full_product_matrix(self,return_path_matrix=True,return_transitivity=True,final_transitivity=False):
+
+    def full_product_matrix(self,return_path_matrix=True):
+        self.unfold_accessibility(return_path_matrix)
+    
+    def unfold_accessibility(self,return_accessibility_matrix=True):
+        """ Unfolding of accessibility. Memory Errors are excepted.
+        
+        """
         P=self[0].copy()
         cumu=[0]
-        trans=[0.0]
 
-        if return_transitivity: 
-            for i in range(1,len(self)):
-                print 'full product iteration',i,'non-zeros: ',P.nnz
-                cumu.append(P.nnz)
-                try:
-                    trans.append(self.matrix_transitivity(P))
-                except MemoryError:
-                    print 'Excepted Memory Error.'
-                    break
-                    
+        for i in range(1,len(self)):
+            print 'unfolding accessibility',i,'non-zeros: ',P.nnz
+            self.bool_int_matrix(P)
+            cumu.append(P.nnz)
+            try:
                 P=P*self[i]
-            
-            if return_path_matrix:
-                P = P.astype('bool')
-                P = P.astype('int')    
-                return P,cumu,trans
-            else:
-                return cumu,trans
-        else:
-            for i in range(1,len(self)):
-                print 'full product iteration',i,'non-zeros: ',P.nnz
-                cumu.append(P.nnz)
-                P=P*self[i]
-            
-            if return_path_matrix:
-                P = P.astype('bool')
-                P = P.astype('int')    
-                return P,cumu
-            else:
-                if final_transitivity:
-                    print 'Computing final Transitivity Matrix...'
-                    finalT=P.multiply(P**2)
-                    print '-> Done.'
-                    return cumu,finalT
-                else:
-                    return cumu
+            except :
+                savemat('P_'+str(i)+'.mat', {'P':P})
+                for j in range(i,len(self)):
+                    savemat('temp/A_'+str(j)+'.mat', {'A':self[j]})
+                break
         
+        if return_accessibility_matrix:
+            P = P.astype('bool')
+            P = P.astype('int')    
+            return P,cumu
+        else:
+            return cumu
+    
+    
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
         
@@ -206,7 +194,7 @@ if __name__=="__main__":
         Z=ProductOfAdjacencyMatrices(At)
         print 'Produkt-Objekt erzeugt'
             
-        c=Z.full_product_matrix(return_path_matrix=False,return_transitivity=False)
+        c=Z.full_product_matrix(return_path_matrix=False)
         h=gwh.cdf2histogram(c)
         
         #print 'Schreibe', P.nnz

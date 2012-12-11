@@ -388,6 +388,34 @@ class AdjMatrixSequence(list):
 
             m = csr_matrix((bs,(us,vs)), shape=(mx_index, mx_index), dtype=np.int32)
             self.append(m)
+
+    def unfold_accessibility(self,return_accessibility_matrix=False):
+            """ Unfold accessibility and store edge density.
+            
+            """
+            P=self[0].copy()
+            cumu=[0]
+            
+            for i in range(1,len(self)):
+                print 'unfolding accessibility',i,'non-zeros: ',P.nnz
+                self.bool_int_matrix(P)
+                cumu.append(P.nnz)
+                try:
+                    P+=P*self[i]
+                except :
+                    savemat('P_'+str(i)+'.mat', {'P':P})
+                    for j in range(i,len(self)):
+                        savemat('temp/A_'+str(j)+'.mat', {'A':self[j]})
+                    break
+            
+            if return_accessibility_matrix:
+                P = P.astype('bool')
+                P = P.astype('int')
+                return P,cumu
+            else:
+                return cumu
+
+
             
 if __name__ == "__main__":
     from pprint import pprint
@@ -397,6 +425,10 @@ if __name__ == "__main__":
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3))
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True)
+    At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
+    C=At.cumulated()
+    mmwrite("Randomized_hit_cumulated.mtx",C)
+
     #At.time_reversed()
     #At.time_shuffled()
     #At.write("Randomized/Time_reversed.txt")
@@ -405,12 +437,12 @@ if __name__ == "__main__":
 
     #E=TemporalEdgeList(fs.dataPath("T_edgelist.txt"),directed=True,timecolumn=3)
     #E=TemporalEdgeList(fs.dataPath("sexual_contacts.dat"),directed=False)
-    E=TemporalEdgeList(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010_matrixlabels.txt"),directed=True)
+    #E=TemporalEdgeList(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010_matrixlabels.txt"),directed=True)
     #E.shuffle_edge_times()
     #E.random_times()
     #E.random_times_uniform()
-    E.randomize_edges()
-    E.write("Randomized/Randomized_edges.txt")
+    #E.randomize_edges()
+    #E.write("Randomized/Randomized_edges.txt")
 
     #print 'Alle: ',len(At)
     #A=At.cumulated()
