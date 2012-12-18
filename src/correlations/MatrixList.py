@@ -390,7 +390,7 @@ class AdjMatrixSequence(list):
             self.append(m)
 
     def unfold_accessibility(self,return_accessibility_matrix=False):
-            """ Unfold accessibility and store edge density.
+            """ Unfold accessibility storing path density.
             
             """
             P=self[0].copy()
