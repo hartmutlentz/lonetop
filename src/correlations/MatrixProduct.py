@@ -163,11 +163,34 @@ class ProductOfAdjacencyMatrices(list):
             return P,cumu
         else:
             return cumu
-    
+
+    def unfold_accessibility_very_large(self,return_accessibility_matrix=True):
+        """ Unfolding of accessibility. Memory Errors are excepted.
+            
+        """
+        P=self[0].todense()
+        cumu=[0]
+        
+        for i in range(1,len(self)):
+            print 'unfolding accessibility',i
+            self.bool_int_matrix(P)
+            cumu.append(np.count_nonzero(P))
+            try:
+                P=P*self[i]
+            except :
+                break
+        
+        if return_accessibility_matrix:
+            P = P.astype('bool')
+            P = P.astype('int')
+            return P,cumu
+        else:
+            return cumu
+
     
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
-        
+    
     def matrix_generation(self,generator,size,**prms):
         for i in range(size):
             self.append(nx.to_scipy_sparse_matrix(generator(**prms)))
@@ -176,16 +199,20 @@ class ProductOfAdjacencyMatrices(list):
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
-    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),columns=(0,1,2))
+    At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,2))
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
     #At=AdjMatrixSequence("Data/sexual_contacts.dat")
     #At.as_undirected()
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),matr_type='dok')
     #C=At.cumulated()
+    Z=ProductOfAdjacencyMatrices(At)
+    c=Z.unfold_accessibility(False)
+    
+    print c
     
     #print len(At),At[0].shape
-    path='Randomized-sexual/'
+    """path='Randomized-sexual/'
     listing=os.listdir(path)
     for infile in listing:
         At=AdjMatrixSequence("Randomized-sexual/"+infile,directed=False)
@@ -196,10 +223,10 @@ if __name__=="__main__":
             
         c=Z.full_product_matrix(return_path_matrix=False)
         h=gwh.cdf2histogram(c)
-        
+    
         gwh.dict2file(c,"Randomized-sexual/"+infile+"_Cumu_edges.txt")
         gwh.dict2file(h,"Randomized-sexual/"+infile+"_histo.txt")
-
+    """
 
 
     #gwh.dict2file(t,"Transitivity.txt")
