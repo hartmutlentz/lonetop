@@ -163,29 +163,12 @@ class ProductOfAdjacencyMatrices(list):
             return P,cumu
         else:
             return cumu
-
-    def unfold_accessibility_very_large(self,return_accessibility_matrix=True):
-        """ Unfolding of accessibility. Memory Errors are excepted.
-            
-        """
-        P=self[0].todense()
-        cumu=[0]
+    
+    def convert_to_pysparse(self):
+        pass
         
-        for i in range(1,len(self)):
-            print 'unfolding accessibility',i
-            self.bool_int_matrix(P)
-            cumu.append(np.count_nonzero(P))
-            try:
-                P=P*self[i]
-            except :
-                break
-        
-        if return_accessibility_matrix:
-            P = P.astype('bool')
-            P = P.astype('int')
-            return P,cumu
-        else:
-            return cumu
+    def unfold_accessibility_pysparse(self):
+        pass
 
     
     def random_vector(self):
