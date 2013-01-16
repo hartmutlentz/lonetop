@@ -4,9 +4,9 @@
 
 ### cd to directory where the job was submitted:
 # on beta-cl
-cd $SGE_O_WORKDIR
+#cd $SGE_O_WORKDIR
 # on dong:
-#cd $PBS_O_WORKDIR
+cd $PBS_O_WORKDIR
 
 LANG=C
 LC_ALL=C
