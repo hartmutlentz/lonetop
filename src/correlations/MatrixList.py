@@ -327,11 +327,11 @@ class AdjMatrixSequence(list):
                 for k in range(j+1,n):
                     a3=self[i]*self[j]*self[k]
                     clu=(a3.diagonal()).sum()
-                    if clu>0.0:
-                        clu_norm=(self[i]*self[j]).sum()-((self[i]*self[j]).diagonal()).sum()
-                        clu_norm+=(self[i]*self[k]).sum()-((self[i]*self[k]).diagonal()).sum()
-                        clu_norm+=(self[j]*self[k]).sum()-((self[j]*self[k]).diagonal()).sum()
                     
+                    clu_norm=(self[i]*self[j]).sum()-((self[i]*self[j]).diagonal()).sum()
+                    clu_norm+=(self[i]*self[k]).sum()-((self[i]*self[k]).diagonal()).sum()
+                    clu_norm+=(self[j]*self[k]).sum()-((self[j]*self[k]).diagonal()).sum()
+                    if clu_norm>0.0:
                         C[j-i,k-j] += float(clu)/clu_norm
                         #c_full[(i,j,k)]=float(clu)/clu_norm
 
@@ -435,7 +435,7 @@ if __name__ == "__main__":
     #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
     #C=At.cumulated()
     #mmwrite("Randomized_hit_cumulated.mtx",C)
-    C=At.clustering_matrix(5000)
+    C=At.clustering_matrix(500)
     mmwrite("Clustering_Matrix_113.mtx",C)
 
     #At.time_reversed()
