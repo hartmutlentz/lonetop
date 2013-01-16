@@ -299,6 +299,7 @@ class AdjMatrixSequence(list):
             self[i]=self.symmetrize_matrix(self[i])
 
     def clustering_matrix2vector(in_file):
+        """ Reads file and returns vector from matrix """
         C=mmread(in_file)
         C=sp.lil_matrix(C)
         x=[0.0 for i in range(C.shape[0])]
@@ -310,24 +311,30 @@ class AdjMatrixSequence(list):
 
     def clustering_matrix(self,limit=None):
         """ Computes the matrix of clustering coefficients of a matrix sequence.
-        
+            
         """
         if limit:
             n=limit
         else:
             n=len(self)
-            
-        C=sp.lil_matrix((n,n),dtype='int')
+
+        C=lil_matrix((n,n),dtype='float')
+        c_full={} # a full list containing all triples
         
-        # Coefficients
         for i in range(n):
             print "i=",i
             for j in range(i+1,n):
                 for k in range(j+1,n):
                     a3=self[i]*self[j]*self[k]
                     clu=(a3.diagonal()).sum()
-                    clu_norm=a3.sum()
-                    C[j-i,k-j] += float(clu)/clu_norm
+                    if clu>0.0:
+                        clu_norm=(self[i]*self[j]).sum()-((self[i]*self[j]).diagonal()).sum()
+                        clu_norm+=(self[i]*self[k]).sum()-((self[i]*self[k]).diagonal()).sum()
+                        clu_norm+=(self[j]*self[k]).sum()-((self[j]*self[k]).diagonal()).sum()
+                    
+                        C[j-i,k-j] += float(clu)/clu_norm
+                        #c_full[(i,j,k)]=float(clu)/clu_norm
+
         return C
 
     def write(self,fname):
@@ -421,13 +428,15 @@ if __name__ == "__main__":
     from pprint import pprint
     
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
-    #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
+    At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3))
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True)
-    At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
-    C=At.cumulated()
-    mmwrite("Randomized_hit_cumulated.mtx",C)
+    #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
+    #C=At.cumulated()
+    #mmwrite("Randomized_hit_cumulated.mtx",C)
+    C=At.clustering_matrix(5000)
+    mmwrite("Clustering_Matrix_113.mtx",C)
 
     #At.time_reversed()
     #At.time_shuffled()
@@ -453,13 +462,6 @@ if __name__ == "__main__":
     
     #At.configuration_model(True)
 
-    #Cumu=At.cumulated()
-    #try:
-    #    mmwrite("Cumulated.mtx",Cumu)
-    #except:
-    #    savemat("Cumulated.mat",{'C':Cumu})
-    
-    #x=At.daily_activity()
-    #gwh.dict2file(x,"daily_activity.txt")
+
     
     
