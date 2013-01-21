@@ -298,10 +298,10 @@ class AdjMatrixSequence(list):
         for i in range(len(self)):
             self[i]=self.symmetrize_matrix(self[i])
 
-    def clustering_matrix2vector(in_file):
+    def clustering_matrix2vector(self,in_file):
         """ Reads file and returns vector from matrix """
         C=mmread(in_file)
-        C=sp.lil_matrix(C)
+        C=lil_matrix(C)
         x=[0.0 for i in range(C.shape[0])]
         
         indices=zip(C.nonzero()[0],C.nonzero()[1])
