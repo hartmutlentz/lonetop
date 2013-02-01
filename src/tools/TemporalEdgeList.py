@@ -23,7 +23,7 @@ class TemporalEdgeList():
         self.mintime=min(self.times)
         self.snapshots=self.__get_snapshots()
         self.static_edges=self.__get_static_edges()
-        assert self.__has_matrix_friendly_node_labels(),"Nodenames must be 0,...,N." 
+        assert self.__has_matrix_friendly_node_labels(),"Nodenames must be 0,...,N."
 
     def __has_matrix_friendly_node_labels(self):
         # check if node labels are matrix friendly
@@ -262,18 +262,18 @@ if __name__=="__main__":
     from pprint import pprint
     the_file='/Users/lentz/Desktop/ER_increasing_density.txt'
     E=TemporalEdgeList(the_file,True,timecolumn=2)
+
+    E.RT()
     print len(E.edges)
     #E=TemporalEdgeList("sociopatterns_113.dat",False)
-    E.GST()
+    #E.GST()
     #pprint(E.edges)
     #E.randomize_edges()
-    #print E.average_size(),len(E.snapshots)
     #E.random_times()
-    #E.random_times_fast()
     #print E.average_size(),len(E.snapshots)
-    print len(E.edges)
+    #print len(E.edges)
 
-    #E.write("ER_increasing_density_GST.txt")
+    #E.write("ER_increasing_density_RT.txt")
 
     #print E.edge_occurrence_times()
     #print E.shuffle_edge_times(E.edge_occurrence_times())

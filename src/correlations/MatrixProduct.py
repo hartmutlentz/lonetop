@@ -152,9 +152,6 @@ class ProductOfAdjacencyMatrices(list):
             try:
                 P=P*self[i]
             except :
-                savemat('P_'+str(i)+'.mat', {'P':P})
-                for j in range(i,len(self)):
-                    savemat('temp/A_'+str(j)+'.mat', {'A':self[j]})
                 break
         
         if return_accessibility_matrix:
@@ -163,13 +160,6 @@ class ProductOfAdjacencyMatrices(list):
             return P,cumu
         else:
             return cumu
-    
-    def convert_to_pysparse(self):
-        pass
-        
-    def unfold_accessibility_pysparse(self):
-        pass
-
     
     def random_vector(self):
         return np.random.rand(self.number_of_nodes)
@@ -182,7 +172,8 @@ class ProductOfAdjacencyMatrices(list):
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
-    At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,2))
+    At=AdjMatrixSequence("/Users/lentz/Desktop/ER_increasing_density_RT.txt",directed=False)
+    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,2))
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
     #At=AdjMatrixSequence("Data/sexual_contacts.dat")
@@ -190,34 +181,19 @@ if __name__=="__main__":
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),matr_type='dok')
     #C=At.cumulated()
     Z=ProductOfAdjacencyMatrices(At)
+    #print Z.number_of_nodes
     c=Z.unfold_accessibility(False)
     
-    print c
+    #h=gwh.cdf2histogram(c)
     
-    #print len(At),At[0].shape
-    """path='Randomized-sexual/'
-    listing=os.listdir(path)
-    for infile in listing:
-        At=AdjMatrixSequence("Randomized-sexual/"+infile,directed=False)
-        print 'Matrixsequenz eingelesen'
-    
-        Z=ProductOfAdjacencyMatrices(At)
-        print 'Produkt-Objekt erzeugt'
-            
-        c=Z.full_product_matrix(return_path_matrix=False)
-        h=gwh.cdf2histogram(c)
-    
-        gwh.dict2file(c,"Randomized-sexual/"+infile+"_Cumu_edges.txt")
-        gwh.dict2file(h,"Randomized-sexual/"+infile+"_histo.txt")
-    """
+    gwh.dict2file(c,"ER-Cumu.txt")
+    #gwh.dict2file(h,"ER-Histo.txt")
 
 
-    #gwh.dict2file(t,"Transitivity.txt")
     #out=P.sum(1)
     #inn=P.sum(0)
     #mmwrite("Vir.mtx",out)
     #mmwrite("Vul.mtx",inn)
-    #mmwrite("sexual_PathMatrix.mtx",P)
 
 
 

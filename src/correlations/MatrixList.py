@@ -6,6 +6,7 @@ import tools.Gewindehammer as gwh
 from tools.TemporalEdgeList import TemporalEdgeList
 
 from scipy.sparse import coo_matrix, csr_matrix, lil_matrix, dok_matrix
+import scipy.sparse as sp
 import scipy.stats
 import numpy as np
 from numpy import loadtxt, zeros, savetxt
@@ -33,7 +34,7 @@ class AdjMatrixSequence(list):
     nodes are reindexed to [0..number_of_nodes]
     """
 
-    def __init__(self,edgelist_fname,directed,write_label_file=False,columns=(0,1,2),firstday=None,lastday=None):
+    def __init__(self,edgelist_fname,directed,write_label_file=True,columns=(0,1,2),firstday=None,lastday=None):
         list.__init__(self)
         #if edgelist_fname == fs.dataPath("D_sf_uvwd_cmpl.txt"):
         #    self.first_day = 2555 #2008-2010
@@ -187,8 +188,9 @@ class AdjMatrixSequence(list):
         
         """
         pd=[]
-        for Cn in self.step_by_step_aggregation():
-            pd.append(path_density_of_A(Cn))
+        for i,Cn in enumerate(self.step_by_step_aggregation()):
+            print 'Static path density. Step ',i
+            pd.append(self.path_density_of_A(Cn))
             
         return pd
         
@@ -203,7 +205,7 @@ class AdjMatrixSequence(list):
         if ende: e=ende
         else: e=len(self)
         
-        for i in range(start,e):
+        for i in range(e):
             C = C+self[i]
             li.append(C)
         
@@ -382,9 +384,9 @@ class AdjMatrixSequence(list):
         edges = loadtxt(self.fname, dtype=int, usecols=self.cols)
         
         # first and last days
-        dummi, auchdummi, days = loadtxt(self.fname, dtype=int, usecols=self.cols, unpack=True)
+        _, _, days = loadtxt(self.fname, dtype=int, usecols=self.cols, unpack=True)
         if not self.first_day:
-            self.first_day=min(days)
+            self.first_day=0  #alternative: min(days)
         if not self.last_day:
             self.last_day=max(days)
         
@@ -415,30 +417,27 @@ class AdjMatrixSequence(list):
             self.append(m)
 
     def unfold_accessibility(self,return_accessibility_matrix=False):
-            """ Unfold accessibility storing path density.
-            
-            """
-            P=self[0].copy()
-            cumu=[0]
-            
-            for i in range(1,len(self)):
-                print 'unfolding accessibility',i,'non-zeros: ',P.nnz
-                self.bool_int_matrix(P)
-                cumu.append(P.nnz)
-                try:
-                    P+=P*self[i]
-                except :
-                    savemat('P_'+str(i)+'.mat', {'P':P})
-                    for j in range(i,len(self)):
-                        savemat('temp/A_'+str(j)+'.mat', {'A':self[j]})
-                    break
-            
-            if return_accessibility_matrix:
-                P = P.astype('bool')
-                P = P.astype('int')
-                return P,cumu
-            else:
-                return cumu
+        """ Unfold accessibility storing path density.
+        
+        """
+        P=self[0].copy()
+        cumu=[0]
+        
+        for i in range(1,len(self)):
+            print 'unfolding accessibility',i,'non-zeros: ',P.nnz
+            self.bool_int_matrix(P)
+            cumu.append(P.nnz)
+            try:
+                P+=P*self[i]
+            except:
+                pass
+        
+        if return_accessibility_matrix:
+            P = P.astype('bool')
+            P = P.astype('int')
+            return P,cumu
+        else:
+            return cumu
 
 
             
@@ -448,8 +447,8 @@ if __name__ == "__main__":
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
     #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    At=AdjMatrixSequence("/Users/lentz/Desktop/ER_increasing_density.txt")
-    At.time_shuffled()
+    At=AdjMatrixSequence("/Users/lentz/Desktop/ER_increasing_density.txt",directed=False,firstday=0)
+    #At.time_shuffled()
 
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
@@ -458,7 +457,8 @@ if __name__ == "__main__":
     #mmwrite("sexual_cumulated.mtx",C)
     #C=At.clustering_matrix(500)
     #mmwrite("Clustering_Matrix_113.mtx",C)
-
+    spd=At.static_path_density()
+    gwh.dict2file(spd,"Static_path_density.txt")
     #At.time_reversed()
     #At.time_shuffled()
     #At.write("Randomized/Time_reversed.txt")
