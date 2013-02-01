@@ -50,6 +50,15 @@ class TemporalEdgeList():
         e=[(u,v) for u,v,d in self.edges]
         return list(set(e))
 
+    """def time_edges(self):
+        # dict {t1:[(u,v),(x,y),...],...}
+        te=dict([(time,[]) for time in self.times])
+        
+        for u,v,t in self.edges:
+            te[t].append((u,v))
+        return te
+    """
+    
     def edge_occurrence_times(self):
         # dict {(u,v):[t1,t2,...],...}
         et=dict([(se,[]) for se in self.static_edges])
@@ -58,6 +67,33 @@ class TemporalEdgeList():
             et[(u,v)].append(d)
         return et
 
+    def GST(self):
+        # alias
+        self.shuffle_snapshot_times()
+    
+    def shuffle_snapshot_times(self):
+        # shuffles all snapshots
+        t_edges=self.snapshots
+    
+        new_keys=t_edges.keys()
+        random.shuffle(new_keys)
+    
+        new_t_edges={}
+        for i in t_edges:
+            new_t_edges[new_keys.pop()]=t_edges[i]
+
+        new_edges=[]
+        for t in new_t_edges:
+            for (u,v) in new_t_edges[t]:
+                new_edges.append((u,v,t))
+
+        self.edges=new_edges
+        self.snapshots=self.__get_snapshots()
+
+    def LST(self):
+        # alias
+        self.shuffle_edge_times()
+    
     def shuffle_edge_times(self):
         # gives every edge new occurrence times at random. Number of occurrences is conserved.
         edge_occs=self.edge_occurrence_times()
@@ -153,6 +189,10 @@ class TemporalEdgeList():
                 new_edges.append((u,v,time))
         self.edges=new_edges
 
+    def RE(self):
+        # alias
+        self.randomize_edges()
+    
     def randomize_edges(self):
         """ Edge randomization for each graphlet
         
@@ -195,6 +235,10 @@ class TemporalEdgeList():
             self.snapshots[i]=edges
         self.__update_edges()
 
+    def RT(self):
+        # alias
+        self.random_times()
+    
     def random_times(self):
         """ Keeps the distribution of graph sizes.
             Example: 
@@ -216,18 +260,20 @@ class TemporalEdgeList():
 
 if __name__=="__main__":
     from pprint import pprint
-    
-    #E=TemporalEdgeList("T_edgelist.txt",True,timecolumn=3)
-    E=TemporalEdgeList("sociopatterns_113.dat",False)
+    the_file='/Users/lentz/Desktop/ER_increasing_density.txt'
+    E=TemporalEdgeList(the_file,True,timecolumn=2)
+    print len(E.edges)
+    #E=TemporalEdgeList("sociopatterns_113.dat",False)
+    E.GST()
     #pprint(E.edges)
     #E.randomize_edges()
-    print E.average_size(),len(E.snapshots)
+    #print E.average_size(),len(E.snapshots)
     #E.random_times()
-    E.random_times_fast()
-    print E.average_size(),len(E.snapshots)
-    #print E.edges
+    #E.random_times_fast()
+    #print E.average_size(),len(E.snapshots)
+    print len(E.edges)
 
-    #E.write("sociopatterns_113_edge_randomized.txt")
+    #E.write("ER_increasing_density_GST.txt")
 
     #print E.edge_occurrence_times()
     #print E.shuffle_edge_times(E.edge_occurrence_times())

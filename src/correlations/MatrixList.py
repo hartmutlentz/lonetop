@@ -1,5 +1,5 @@
 #! /usr/bin/python
-import sys, os
+import sys, os,itertools
 sys.path.insert(1, os.path.join(sys.path[0], os.pardir))
 import tools.filesystem as fs
 import tools.Gewindehammer as gwh
@@ -309,31 +309,49 @@ class AdjMatrixSequence(list):
             x[i+j] += C[i,j]
         return x
 
-    def clustering_matrix(self,limit=None):
+    def __random_combination_with_replacement(self,iterable, r):
+        "Random selection from itertools.combinations_with_replacement(iterable, r)"
+        pool = tuple(iterable)
+        n = len(pool)
+        indices = sorted(random.randrange(n) for i in xrange(r))
+        return tuple(pool[i] for i in indices)
+    
+    def clustering_matrix(self,limit=None,random_iterations=None):
         """ Computes the matrix of clustering coefficients of a matrix sequence.
             
         """
+        def triple_product(M1,M2,M3):
+            # Product of three matrices
+            a3=M1*M2*M3
+            tr=(a3.diagonal()).sum()
+            
+            clu_norm=(M1*M2).sum()-((M1*M2).diagonal()).sum()
+            clu_norm+=(M1*M3).sum()-((M1*M3).diagonal()).sum()
+            clu_norm+=(M2*M3).sum()-((M2*M3).diagonal()).sum()
+
+            return tr,clu_norm
+
+        
         if limit:
             n=limit
         else:
             n=len(self)
 
-        C=lil_matrix((n,n),dtype='float')
-        c_full={} # a full list containing all triples
-        
-        for i in range(n):
-            print "i=",i
-            for j in range(i+1,n):
-                for k in range(j+1,n):
-                    a3=self[i]*self[j]*self[k]
-                    clu=(a3.diagonal()).sum()
-                    
-                    clu_norm=(self[i]*self[j]).sum()-((self[i]*self[j]).diagonal()).sum()
-                    clu_norm+=(self[i]*self[k]).sum()-((self[i]*self[k]).diagonal()).sum()
-                    clu_norm+=(self[j]*self[k]).sum()-((self[j]*self[k]).diagonal()).sum()
-                    if clu_norm>0.0:
-                        C[j-i,k-j] += float(clu)/clu_norm
-                        #c_full[(i,j,k)]=float(clu)/clu_norm
+        domain=range(n)
+        C=lil_matrix((n,n),dtype='float')        
+
+        if random_iterations:            
+            for l in range(random_iterations):
+                (i,j,k)=self.__random_combination_with_replacement(domain,3)
+                trace,c_norm = triple_product(self[i],self[j],self[k])
+                if c_norm>0.0:
+                    C[j-i,k-j] += float(trace)/c_norm
+
+        else:
+            for (i,j,k) in itertools.combinations(domain,3):
+                trace,c_norm = triple_product(self[i],self[j],self[k])
+                if c_norm>0.0:
+                    C[j-i,k-j] += float(trace)/c_norm
 
         return C
 
@@ -428,15 +446,18 @@ if __name__ == "__main__":
     from pprint import pprint
     
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
-    At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
+    #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3))
-    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True)
+    At=AdjMatrixSequence("/Users/lentz/Desktop/ER_increasing_density.txt")
+    At.time_shuffled()
+
+    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
+    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
     #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
     #C=At.cumulated()
-    #mmwrite("Randomized_hit_cumulated.mtx",C)
-    C=At.clustering_matrix(500)
-    mmwrite("Clustering_Matrix_113.mtx",C)
+    #mmwrite("sexual_cumulated.mtx",C)
+    #C=At.clustering_matrix(500)
+    #mmwrite("Clustering_Matrix_113.mtx",C)
 
     #At.time_reversed()
     #At.time_shuffled()
