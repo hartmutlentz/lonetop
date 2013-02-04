@@ -152,7 +152,10 @@ class ProductOfAdjacencyMatrices(list):
             try:
                 P=P*self[i]
             except :
+                print 'Break at t = ',i
                 break
+        else:
+            'Unfolding complete.'
         
         if return_accessibility_matrix:
             P = P.astype('bool')

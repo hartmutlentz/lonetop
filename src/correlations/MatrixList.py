@@ -199,7 +199,7 @@ class AdjMatrixSequence(list):
             i.e. [A1, A1+A2, A1+A2+A3, ...]
         
         """
-        C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int64)
+        C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int32)
         li=[]
         
         if ende: e=ende
@@ -317,6 +317,16 @@ class AdjMatrixSequence(list):
         n = len(pool)
         indices = sorted(random.randrange(n) for i in xrange(r))
         return tuple(pool[i] for i in indices)
+
+    def __consume(iterator, n):
+        "Advance the iterator n-steps ahead. If n is none, consume entirely."
+        # Use functions that consume iterators at C speed.
+        if n is None:
+            # feed the entire iterator into a zero-length deque
+            collections.deque(iterator, maxlen=0)
+        else:
+            # advance to the empty slice starting at position n
+            next(itertools.islice(iterator, n, n), None)
     
     def clustering_matrix(self,limit=None,random_iterations=None):
         """ Computes the matrix of clustering coefficients of a matrix sequence.
@@ -430,8 +440,11 @@ class AdjMatrixSequence(list):
             try:
                 P+=P*self[i]
             except:
+                print 'Break at t = ',i
                 pass
-        
+        else:
+            print 'Unfolding complete.'
+                    
         if return_accessibility_matrix:
             P = P.astype('bool')
             P = P.astype('int')
@@ -447,7 +460,7 @@ if __name__ == "__main__":
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
     #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    At=AdjMatrixSequence("/Users/lentz/Desktop/ER_increasing_density.txt",directed=False,firstday=0)
+    At=AdjMatrixSequence("/Users/lentz/Desktop/Impact_of_data_density/ER_increasing_density_RT.txt",directed=False,firstday=0)
     #At.time_shuffled()
 
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
@@ -457,6 +470,7 @@ if __name__ == "__main__":
     #mmwrite("sexual_cumulated.mtx",C)
     #C=At.clustering_matrix(500)
     #mmwrite("Clustering_Matrix_113.mtx",C)
+    print len(At)
     spd=At.static_path_density()
     gwh.dict2file(spd,"Static_path_density.txt")
     #At.time_reversed()
