@@ -155,7 +155,7 @@ class ProductOfAdjacencyMatrices(list):
                 print 'Break at t = ',i
                 break
         else:
-            'Unfolding complete.'
+            print '---> Unfolding complete.'
         
         if return_accessibility_matrix:
             P = P.astype('bool')
@@ -175,7 +175,7 @@ class ProductOfAdjacencyMatrices(list):
 
 if __name__=="__main__":
     #Z=ProductOfAdjacencyMatrices(nx.fast_gnp_random_graph,n=100,p=0.01,directed=True)
-    At=AdjMatrixSequence("/Users/lentz/Desktop/ER_increasing_density_RT.txt",directed=False)
+    At=AdjMatrixSequence("/Users/lentz/Desktop/BA_reduced_RT.txt",directed=False)
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,2))
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"))
     #At=AdjMatrixSequence("Data/sociopatterns_hypertext_social_ijt.dat")
@@ -184,13 +184,12 @@ if __name__=="__main__":
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),matr_type='dok')
     #C=At.cumulated()
     Z=ProductOfAdjacencyMatrices(At)
-    #print Z.number_of_nodes
     c=Z.unfold_accessibility(False)
     
+    gwh.dict2file(c,"BA-Cumu.txt")
+
     #h=gwh.cdf2histogram(c)
-    
-    gwh.dict2file(c,"ER-Cumu.txt")
-    #gwh.dict2file(h,"ER-Histo.txt")
+    #gwh.dict2file(h,"BA-Histo.txt")
 
 
     #out=P.sum(1)

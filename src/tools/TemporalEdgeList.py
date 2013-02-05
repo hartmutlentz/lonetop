@@ -260,20 +260,19 @@ class TemporalEdgeList():
 
 if __name__=="__main__":
     from pprint import pprint
-    the_file='/Users/lentz/Desktop/ER_increasing_density.txt'
+    the_file='/Users/lentz/Desktop/BA_reduced_edges.txt'
     E=TemporalEdgeList(the_file,True,timecolumn=2)
 
     E.RT()
-    print len(E.edges)
+    #print len(E.edges)
     #E=TemporalEdgeList("sociopatterns_113.dat",False)
-    #E.GST()
     #pprint(E.edges)
     #E.randomize_edges()
     #E.random_times()
     #print E.average_size(),len(E.snapshots)
     #print len(E.edges)
 
-    #E.write("ER_increasing_density_RT.txt")
+    E.write("BA_reduced_RT.txt")
 
     #print E.edge_occurrence_times()
     #print E.shuffle_edge_times(E.edge_occurrence_times())

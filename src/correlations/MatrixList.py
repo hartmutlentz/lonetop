@@ -178,7 +178,7 @@ class AdjMatrixSequence(list):
         n=scipy.shape(A)[0]
         
         for i in range(n):
-            out_size=len(sp.csgraph.depth_first_order(A,i,return_predecessors=False))
+            out_size=len(sp.csgraph.depth_first_order(A,i,return_predecessors=False))-1
             paths += out_size
             
         return float(paths)/n**2
@@ -213,7 +213,7 @@ class AdjMatrixSequence(list):
         
     def cumulated(self,start=0,ende=None):
         """ Returns Cumulated Graph as Matrix """
-        C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int64)
+        C=csr_matrix((self.number_of_nodes, self.number_of_nodes), dtype=np.int32)
         
         if ende: e=ende
         else: e=len(self)
@@ -396,7 +396,7 @@ class AdjMatrixSequence(list):
         # first and last days
         _, _, days = loadtxt(self.fname, dtype=int, usecols=self.cols, unpack=True)
         if not self.first_day:
-            self.first_day=0  #alternative: min(days)
+            self.first_day=min(days) #0
         if not self.last_day:
             self.last_day=max(days)
         
@@ -460,19 +460,20 @@ if __name__ == "__main__":
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
     #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    At=AdjMatrixSequence("/Users/lentz/Desktop/Impact_of_data_density/ER_increasing_density_RT.txt",directed=False,firstday=0)
+    #At=AdjMatrixSequence("/Users/lentz/Desktop/BA_data_sensity/Unfiltered/m=1/BA_RT.txt",directed=False,firstday=0)
     #At.time_shuffled()
 
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
-    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
+    At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
+    print 'Hier ', len(At)
+
     #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
-    #C=At.cumulated()
-    #mmwrite("sexual_cumulated.mtx",C)
+    C=At.cumulated(ende=308)
+    mmwrite("Hit_aggregated_308.mtx",C)
     #C=At.clustering_matrix(500)
     #mmwrite("Clustering_Matrix_113.mtx",C)
-    print len(At)
-    spd=At.static_path_density()
-    gwh.dict2file(spd,"Static_path_density.txt")
+    #spd=At.static_path_density()
+    #gwh.dict2file(spd,"Static_path_density.txt")
     #At.time_reversed()
     #At.time_shuffled()
     #At.write("Randomized/Time_reversed.txt")
