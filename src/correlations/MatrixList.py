@@ -319,7 +319,11 @@ class AdjMatrixSequence(list):
         return tuple(pool[i] for i in indices)
 
     def __consume(iterator, n):
-        "Advance the iterator n-steps ahead. If n is none, consume entirely."
+        """ Advance the iterator n-steps ahead. If n is none, consume entirely.
+            alternative Generator.next() usage: x=my_gnerator; next(x,'finished')
+            
+            
+        """
         # Use functions that consume iterators at C speed.
         if n is None:
             # feed the entire iterator into a zero-length deque
@@ -328,7 +332,7 @@ class AdjMatrixSequence(list):
             # advance to the empty slice starting at position n
             next(itertools.islice(iterator, n, n), None)
     
-    def clustering_matrix(self,limit=None,random_iterations=None):
+    def clustering_matrix(self,limit=None,random_iterations=False):
         """ Computes the matrix of clustering coefficients of a matrix sequence.
             
         """
@@ -343,14 +347,14 @@ class AdjMatrixSequence(list):
 
             return tr,clu_norm
 
-        
         if limit:
             n=limit
         else:
             n=len(self)
 
         domain=range(n)
-        C=lil_matrix((n,n),dtype='float')        
+        C=lil_matrix((n,n),dtype='float')
+        #c=[]
 
         if random_iterations:            
             for l in range(random_iterations):
@@ -358,14 +362,16 @@ class AdjMatrixSequence(list):
                 trace,c_norm = triple_product(self[i],self[j],self[k])
                 if c_norm>0.0:
                     C[j-i,k-j] += float(trace)/c_norm
-
+                    #c.append((i,j,k,float(trace)/c_norm))
         else:
             for (i,j,k) in itertools.combinations(domain,3):
                 trace,c_norm = triple_product(self[i],self[j],self[k])
                 if c_norm>0.0:
                     C[j-i,k-j] += float(trace)/c_norm
+                    #c.append((i,j,k,float(trace)/c_norm))
 
         return C
+        #return c
 
     def write(self,fname):
         """ writes self to txtfile.
@@ -460,11 +466,11 @@ if __name__ == "__main__":
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
     #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    #At=AdjMatrixSequence("/Users/lentz/Desktop/BA_data_sensity/Unfiltered/m=1/BA_RT.txt",directed=False,firstday=0)
+    At=AdjMatrixSequence("/Users/lentz/Desktop/Randomized_edges.txt",directed=True,firstday=0)
     #At.time_shuffled()
 
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
-    At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
+    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
     print 'Hier ', len(At)
 
     #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
