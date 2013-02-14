@@ -17,14 +17,14 @@ class TemporalEdgeList():
     def __init__(self,fname,directed,timecolumn=2):
         #list.__init__(self)
         self.edges=np.loadtxt(fname,usecols=(0,1,timecolumn),dtype='int')
-        self.edges=list(set(self.edges))
+        #self.edges=list(set(self.edges.flat))
         self.is_directed=directed
         self.times=set(np.loadtxt(fname,usecols=(timecolumn,),dtype='int',unpack=True))
         self.maxtime=max(self.times)
         self.mintime=min(self.times)
         self.snapshots=self.__get_snapshots()
         self.static_edges=self.__get_static_edges()
-        assert self.__has_matrix_friendly_node_labels(),"Nodenames must be 0,...,N."
+        #assert self.__has_matrix_friendly_node_labels(),"Nodenames must be 0,...,N."
 
     def __has_matrix_friendly_node_labels(self):
         # check if node labels are matrix friendly
@@ -149,8 +149,8 @@ class TemporalEdgeList():
                     return False
 
             for i in range(100*len(ed)):
-                first=random.choice(ed)
-                second=random.choice(ed)
+                first=random.sample(ed,1)[0]#random.choice(ed)
+                second=random.sample(ed,1)[0]#random.choice(ed)
                 if are_disjoint(first,second) and pair_not_in_G(first,second,ed):
                     return (first,second)
             return False
@@ -166,7 +166,8 @@ class TemporalEdgeList():
                 if len(nodeset)>3: return True
 
         # switch edges
-        edges=self.snapshots[time][:]
+        edges=set(self.snapshots[time][:])
+        
         if legal_graph_condition(edges):
             for i in range(iterations):
                 erfolg=get_legal_edgepair(edges)
@@ -176,11 +177,11 @@ class TemporalEdgeList():
                     edges.remove((x[0],x[1]))
                     edges.remove((y[0],y[1]))
                     
-                    edges.append((x[0],y[1]))
-                    edges.append((y[0],x[1]))
+                    edges.add((x[0],y[1]))
+                    edges.add((y[0],x[1]))
                 #print 'remaining: ', iterations-i
 
-        self.snapshots[time]=edges
+        self.snapshots[time]=list(edges)
 
     def __update_edges(self):
         # reads snapshots and rewrites edgelist
@@ -261,10 +262,10 @@ class TemporalEdgeList():
 
 if __name__=="__main__":
     from pprint import pprint
-    the_file='/Users/lentz/Desktop/BA_reduced_edges.txt'
+    the_file='out1.dat'
     E=TemporalEdgeList(the_file,True,timecolumn=2)
 
-    E.RT()
+    E.RE()
     #print len(E.edges)
     #E=TemporalEdgeList("sociopatterns_113.dat",False)
     #pprint(E.edges)
@@ -273,7 +274,7 @@ if __name__=="__main__":
     #print E.average_size(),len(E.snapshots)
     #print len(E.edges)
 
-    E.write("BA_reduced_RT.txt")
+    E.write("out1_RE.txt")
 
     #print E.edge_occurrence_times()
     #print E.shuffle_edge_times(E.edge_occurrence_times())
