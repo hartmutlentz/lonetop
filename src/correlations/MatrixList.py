@@ -447,13 +447,13 @@ class AdjMatrixSequence(list):
         
         for i in range(1,len(self)):
             print 'unfolding accessibility',i,'non-zeros: ',P.nnz
-            #self.bool_int_matrix(P)
+            self.bool_int_matrix(P)
             cumu.append(P.nnz)
-            #try:
-            P=P+P*self[i]
-            #except:
-            #    print 'Break at t = ',i
-            #    pass
+            try:
+                P=P+P*self[i]
+            except:
+                print 'Break at t = ',i
+                pass
         else:
             print '---> Unfolding complete.'
                     
