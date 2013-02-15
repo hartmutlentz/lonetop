@@ -272,7 +272,6 @@ class AdjMatrixSequence(list):
         if return_copy: return x
         else: return
 
-
     def time_reversed(self,return_copy=False):
         """ reverts list and transposes elements
         
@@ -432,24 +431,31 @@ class AdjMatrixSequence(list):
             m = csr_matrix((bs,(us,vs)), shape=(mx_index, mx_index), dtype=np.int32)
             self.append(m)
 
+    def bool_int_matrix(self,M):
+        """ Returns matrix with only np.int64: ones. """
+        M=M.astype('bool')
+        M=M.astype('i')
+
     def unfold_accessibility(self,return_accessibility_matrix=False):
         """ Unfold accessibility storing path density.
         
         """
         P=self[0].copy()
-        cumu=[0]
+        D=sp.identity(self.number_of_nodes,dtype=np.int32)
+        P=P+D
+        cumu=[P.nnz]
         
         for i in range(1,len(self)):
             print 'unfolding accessibility',i,'non-zeros: ',P.nnz
-            self.bool_int_matrix(P)
+            #self.bool_int_matrix(P)
             cumu.append(P.nnz)
-            try:
-                P+=P*self[i]
-            except:
-                print 'Break at t = ',i
-                pass
+            #try:
+            P=P+P*self[i]
+            #except:
+            #    print 'Break at t = ',i
+            #    pass
         else:
-            print 'Unfolding complete.'
+            print '---> Unfolding complete.'
                     
         if return_accessibility_matrix:
             P = P.astype('bool')
@@ -464,18 +470,18 @@ if __name__ == "__main__":
     from pprint import pprint
     
     #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
-    #At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
+    At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
     #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    At=AdjMatrixSequence("/Users/lentz/Desktop/Randomized_edges.txt",directed=True,firstday=0)
+    #At=AdjMatrixSequence("/Users/lentz/Desktop/Randomized_edges.txt",directed=True,firstday=0)
     #At.time_shuffled()
 
     #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
     #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
     print 'Hier ', len(At)
-
+    c=At.unfold_accessibility()
     #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
-    C=At.cumulated(ende=308)
-    mmwrite("Hit_aggregated_308.mtx",C)
+    #C=At.cumulated(ende=308)
+    #mmwrite("Hit_aggregated_308.mtx",C)
     #C=At.clustering_matrix(500)
     #mmwrite("Clustering_Matrix_113.mtx",C)
     #spd=At.static_path_density()
@@ -484,7 +490,7 @@ if __name__ == "__main__":
     #At.time_shuffled()
     #At.write("Randomized/Time_reversed.txt")
     #den=At.density()
-    #gwh.dict2file(den,"density.txt")
+    gwh.dict2file(c,"cumu.txt")
 
     #E=TemporalEdgeList(fs.dataPath("T_edgelist.txt"),directed=True,timecolumn=3)
     #E=TemporalEdgeList(fs.dataPath("sexual_contacts.dat"),directed=False)
