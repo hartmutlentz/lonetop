@@ -4,7 +4,7 @@ import sys,os
 sys.path.append('/Users/lentz/Documents/Physik/my_py') # Mac
 sys.path.insert(1, os.path.join(sys.path[0], os.pardir))
 import tools.filesystem as fs
-import tools.Gewindehammer as gwh
+import tools.Gewindehammer_lonetop as gwh
 
 from MatrixList import AdjMatrixSequence
 import scipy.sparse as sp
