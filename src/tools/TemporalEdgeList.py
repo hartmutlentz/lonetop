@@ -6,7 +6,7 @@ except: pass
 try: sys.path.append('/home/lentz/Documents/GitHub_locals/my_py') # Beta-Cl
 except: pass
 
-import Gewindehammer as gwh
+import Gewindehammer_lonetop as gwh
 import scipy as sc, networkx as nx, numpy as np, random
 
 class TemporalEdgeList():
