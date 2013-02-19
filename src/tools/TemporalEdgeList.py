@@ -44,7 +44,11 @@ class TemporalEdgeList():
         
         for u,v,d in self.edges:
             t[d].append((u,v))
-        return t
+        
+        # remove empty snapshots
+        t_new=dict((k,v) for (k,v) in t.iteritems() if v!=[])
+
+        return t_new
 
     def __get_static_edges(self):
         # all edges present in the static network
