@@ -15,16 +15,15 @@ class TemporalEdgeList():
     
     """
     def __init__(self,fname,directed,timecolumn=2):
-        #list.__init__(self)
         self.edges=np.loadtxt(fname,usecols=(0,1,timecolumn),dtype='int')
-        #self.edges=list(set(self.edges.flat))
+        self.__clean_edges()
         self.is_directed=directed
-        self.times=set(np.loadtxt(fname,usecols=(timecolumn,),dtype='int',unpack=True))
-        self.maxtime=max(self.times)
-        self.mintime=min(self.times)
+        self.real_times=set(np.loadtxt(fname,usecols=(timecolumn,),dtype='int',unpack=True))
+        #self.maxtime=max(self.times)
+        #self.mintime=min(self.times)
+        self.possible_times=range(min(self.real_times),max(self.real_times)+1)
         self.snapshots=self.__get_snapshots()
         self.static_edges=self.__get_static_edges()
-        #assert self.__has_matrix_friendly_node_labels(),"Nodenames must be 0,...,N."
 
     def __has_matrix_friendly_node_labels(self):
         # check if node labels are matrix friendly
@@ -40,30 +39,29 @@ class TemporalEdgeList():
     
     def __get_snapshots(self):
         # dict {d:[(u1,v1),(u2,v2)], ...}
-        t=dict([(i,[]) for i in range(self.maxtime+1)])
+        t=dict([(i,[]) for i in self.possible_times])
         
         for u,v,d in self.edges:
             t[d].append((u,v))
         
         # remove empty snapshots
-        t_new=dict((k,v) for (k,v) in t.iteritems() if v!=[])
+        #t_new=dict((k,v) for (k,v) in t.iteritems() if v!=[])
 
-        return t_new
+        return t
 
     def __get_static_edges(self):
         # all edges present in the static network
         e=[(u,v) for u,v,d in self.edges]
         return list(set(e))
 
-    """def time_edges(self):
-        # dict {t1:[(u,v),(x,y),...],...}
-        te=dict([(time,[]) for time in self.times])
+    def __clean_edges(self):
+        # remove multiple edges
+        the_edges=[(u,v,t) for (u,v,t) in self.edges]
+        cut=set(the_edges)
+        if len(cut)!=len(the_edges):
+            print 'Removed multiple edges in dataset.'
+        self.edges=list(cut)
         
-        for u,v,t in self.edges:
-            te[t].append((u,v))
-        return te
-    """
-    
     def edge_occurrence_times(self):
         # dict {(u,v):[t1,t2,...],...}
         et=dict([(se,[]) for se in self.static_edges])
@@ -78,6 +76,8 @@ class TemporalEdgeList():
     
     def shuffle_snapshot_times(self):
         # shuffles all snapshots
+        assert False, 'Debug me! Use AdjMatrixSequence instead.'
+        print "Edgelist.GST is not tested! Use AdjMatrixSequence instead."
         t_edges=self.snapshots
     
         new_keys=t_edges.keys()
@@ -116,6 +116,42 @@ class TemporalEdgeList():
         self.edges=new_edges
         self.snapshots=self.__get_snapshots()
 
+    def TR(self):
+        # time reversal alias
+        self.time_reversal()
+    
+    def time_reversal(self):
+        # revert time stamps
+        assert False, 'Debug me! Use AdjMatrixSequence instead.'
+        new_keys=range(self.mintime,self.maxtime+1)
+        
+        new_snapshots={}
+        for i in self.snapshots:
+            new_snapshots[new_keys.pop()]=self.snapshots[i]
+        
+        #self.snapshots=new_snapshots
+        new_edges=[]
+        for t in new_snapshots:
+            for (u,v) in new_snapshots[t]:
+                new_edges.append((u,v,t))
+
+        self.edges=new_edges
+        self.snapshots=self.__get_snapshots()
+
+        # update self
+        #self.__update_edges()
+        self.static_edges=self.__get_static_edges()
+            
+        # transpose if network is directed
+        if self.is_directed:
+            for graphlet in self.snapshots:
+                self.__revert_snapshot(graphlet)
+
+    def __revert_snapshot(self,time):
+        # reverts a single snapshot
+        edges=self.snapshots[time][:]        
+        new_edges=[(v,u) for (u,v) in edges]    
+        self.snapshots[time]=new_edges
     
     def write(self,fname):
         """ writes self to txtfile
@@ -203,9 +239,11 @@ class TemporalEdgeList():
         """ Edge randomization for each graphlet
         
         """
-        for i in range(self.maxtime):
-            print "Randomizing ",i," of ",self.maxtime
-            self.__randomize_graphlet(i,maxiterations)
+        timespan=self.maxtime-self.mintime
+        
+        for i,j in enumerate(self.snapshots):#range(self.maxtime):
+            print "Randomizing ",i," of ",timespan
+            self.__randomize_graphlet(j,maxiterations)
         self.__update_edges()
         self.static_edges=self.__get_static_edges()
 
@@ -247,20 +285,32 @@ class TemporalEdgeList():
     
     def random_times(self):
         """ Keeps the distribution of graph sizes.
-            Example: 
+            Example:
             before: time_1: 2 edges, time_2: 5 edges, time_3: 4 edges
-              edges are elements of static edges (fixed):
+            edges are elements of static edges (fixed):
             after: time_1: 5 edges, time_2: 4 edges, time_3: 2 edges
-              edges are chosen randomly from static graph
+            edges are chosen randomly from static graph
         """
-        sizes=[len(self.snapshots[i]) for i in self.snapshots]
-        random.shuffle(sizes)
-        for i in range(self.maxtime+1):
-            #print "Random times. Step ",i," of ",self.maxtime+1
-            edges=[]
-            for j in range(sizes[i]):
-                edges.append(random.choice(self.static_edges))
-            self.snapshots[i]=edges
+        sizes=dict([(i,len(self.snapshots[i])) for i in self.snapshots])
+        # new permutation of edge densities
+        new_keys=sizes.keys()
+        random.shuffle(new_keys)
+        
+        new_sizes={}
+        for i in sizes:
+            new_sizes[new_keys.pop()]=sizes[i]
+                
+        timespan=self.maxtime-self.mintime
+        for i,j in enumerate(sizes):
+            print "Random times. Step ",i," of ",timespan
+            edges=set()
+            #while len(edges)<new_sizes[j]:
+            for _ in range(len(self.static_edges)):
+                if len(edges)>=new_sizes[j]:
+                    break
+                edges.add(random.choice(self.static_edges))
+            
+            self.snapshots[j]=list(edges)
         self.__update_edges()
 
 
@@ -270,6 +320,7 @@ if __name__=="__main__":
     E=TemporalEdgeList(the_file,True,timecolumn=2)
 
     E.RE()
+    print E.snapshots[0]
     #print len(E.edges)
     #E=TemporalEdgeList("sociopatterns_113.dat",False)
     #pprint(E.edges)
@@ -278,7 +329,7 @@ if __name__=="__main__":
     #print E.average_size(),len(E.snapshots)
     #print len(E.edges)
 
-    E.write("out1_RE.txt")
+    #E.write("out1_RE.txt")
 
     #print E.edge_occurrence_times()
     #print E.shuffle_edge_times(E.edge_occurrence_times())

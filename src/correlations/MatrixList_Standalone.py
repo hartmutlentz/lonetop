@@ -303,22 +303,31 @@ class AdjMatrixSequence(list):
         """ writes self to txtfile.
             If network is undirected, edge-pairs appear twice.
             
-        """        
+        """
+        # generate edge list
         t_edges=[]
         for i in range(len(self)):
             print "extracting edges ",i
             indices=zip(self[i].nonzero()[0],self[i].nonzero()[1])
             to_add=[(u,v,i) for u,v in indices]
             t_edges.extend(to_add)
-        
-        t_edges_clean=t_edges[:]
+
+        # edge list as set for file storage
+        t_edges_set=set(t_edges)        
+        # remove double edges, if undirected
         if not self.is_directed:
-            print "cleaning edgelist..."
-            for (u,v,d) in t_edges_clean:
-                if (v,u,d) in t_edges_clean:
-                    t_edges_clean.remove((v,u,d))
-        
-        gwh.write_array(t_edges_clean,fname)
+            print "removing bidirectional links..."
+            for (u,v,d) in t_edges:
+                if (v,u,d) in t_edges_set and (u,v,d) in t_edges_set:
+                    t_edges_set.remove((v,u,d))
+
+        # write file
+        g=file(fname,'w+')
+        for e in t_edges_set:
+            wstring=''
+            for j in range(1,len(e)): wstring += '\t'+str(e[j])
+            g.writelines(( str(e[0])+wstring+'\n' ))
+        g.close
         return
 
     def matricesCreation(self):
