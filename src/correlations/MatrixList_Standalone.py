@@ -307,7 +307,7 @@ class AdjMatrixSequence(list):
         # generate edge list
         t_edges=[]
         for i in range(len(self)):
-            print "extracting edges ",i
+            #print "extracting edges ",i
             indices=zip(self[i].nonzero()[0],self[i].nonzero()[1])
             to_add=[(u,v,i) for u,v in indices]
             t_edges.extend(to_add)

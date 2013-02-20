@@ -18,10 +18,13 @@ class TemporalEdgeList():
         self.edges=np.loadtxt(fname,usecols=(0,1,timecolumn),dtype='int')
         self.__clean_edges()
         self.is_directed=directed
+        # time infos
         self.real_times=set(np.loadtxt(fname,usecols=(timecolumn,),dtype='int',unpack=True))
-        #self.maxtime=max(self.times)
-        #self.mintime=min(self.times)
+        self.maxtime=max(self.real_times)
+        self.mintime=min(self.real_times)
+        self.timespan=self.maxtime-self.mintime
         self.possible_times=range(min(self.real_times),max(self.real_times)+1)
+        # init
         self.snapshots=self.__get_snapshots()
         self.static_edges=self.__get_static_edges()
 
@@ -239,7 +242,7 @@ class TemporalEdgeList():
         """ Edge randomization for each graphlet
         
         """
-        timespan=self.maxtime-self.mintime
+        timespan=self.timespan
         
         for i,j in enumerate(self.snapshots):#range(self.maxtime):
             print "Randomizing ",i," of ",timespan
