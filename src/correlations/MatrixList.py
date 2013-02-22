@@ -187,6 +187,10 @@ class AdjMatrixSequence(list):
         
         return da
 
+    def GST(self,return_copy=False):
+        # alias
+        self.time_shuffled(return_copy)
+    
     def time_shuffled(self,return_copy=False):
         """
         
@@ -198,6 +202,10 @@ class AdjMatrixSequence(list):
 
         if return_copy: return x
         else: return
+    
+    def TR(self,return_copy):
+        # alias
+        self.time_reversed(return_copy)
 
     def time_reversed(self,return_copy=False):
         """ reverts list and transposes elements

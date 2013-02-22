@@ -25,7 +25,7 @@ class TemporalEdgeList():
         self.timespan=self.maxtime-self.mintime
         self.possible_times=range(min(self.real_times),max(self.real_times)+1)
         # init
-        self.snapshots=self.__get_snapshots()
+        self.snapshots=self.__update_snapshots()
         self.static_edges=self.__get_static_edges()
 
     def __has_matrix_friendly_node_labels(self):
@@ -40,17 +40,24 @@ class TemporalEdgeList():
         if nodes==range(len(nodes)): return True
         else: return False
     
-    def __get_snapshots(self):
+    def __update_snapshots(self):
         # dict {d:[(u1,v1),(u2,v2)], ...}
+        # use after self.edges have been changed/created
         t=dict([(i,[]) for i in self.possible_times])
         
         for u,v,d in self.edges:
             t[d].append((u,v))
-        
-        # remove empty snapshots
-        #t_new=dict((k,v) for (k,v) in t.iteritems() if v!=[])
 
         return t
+
+    def __update_edges(self):
+        # reads snapshots and rewrites edgelist
+        # use after self.snapshots have been changed/created
+        new_edges=[]
+        for time in self.snapshots:
+            for u,v in self.snapshots[time]:
+                new_edges.append((u,v,time))
+        self.edges=new_edges
 
     def __get_static_edges(self):
         # all edges present in the static network
@@ -79,16 +86,15 @@ class TemporalEdgeList():
     
     def shuffle_snapshot_times(self):
         # shuffles all snapshots
-        assert False, 'Debug me! Use AdjMatrixSequence instead.'
+        #assert False, 'Debug me! Use AdjMatrixSequence instead.'
         print "Edgelist.GST is not tested! Use AdjMatrixSequence instead."
-        t_edges=self.snapshots
     
-        new_keys=t_edges.keys()
+        new_keys=(self.snapshots).keys()
         random.shuffle(new_keys)
     
         new_t_edges={}
-        for i in t_edges:
-            new_t_edges[new_keys.pop()]=t_edges[i]
+        for i in self.possible_times:
+            new_t_edges[new_keys.pop()]=self.snapshots[i]
 
         new_edges=[]
         for t in new_t_edges:
@@ -96,7 +102,7 @@ class TemporalEdgeList():
                 new_edges.append((u,v,t))
 
         self.edges=new_edges
-        self.snapshots=self.__get_snapshots()
+        self.snapshots=self.__update_snapshots()
 
     def LST(self):
         # alias
@@ -117,7 +123,7 @@ class TemporalEdgeList():
                 new_edges.append((u,v,t))
         
         self.edges=new_edges
-        self.snapshots=self.__get_snapshots()
+        self.snapshots=self.__update_snapshots()
 
     def TR(self):
         # time reversal alias
@@ -125,12 +131,13 @@ class TemporalEdgeList():
     
     def time_reversal(self):
         # revert time stamps
-        assert False, 'Debug me! Use AdjMatrixSequence instead.'
+        #assert False, 'Debug me! Use AdjMatrixSequence instead.'
+        print "Edgelist.TR is not tested! Use AdjMatrixSequence instead."
         new_keys=range(self.mintime,self.maxtime+1)
-        
+
         new_snapshots={}
-        for i in self.snapshots:
-            new_snapshots[new_keys.pop()]=self.snapshots[i]
+        for i in self.possible_times:
+            new_snapshots[new_keys.pop()]=self.snapshots[i] # FIXME
         
         #self.snapshots=new_snapshots
         new_edges=[]
@@ -139,16 +146,15 @@ class TemporalEdgeList():
                 new_edges.append((u,v,t))
 
         self.edges=new_edges
-        self.snapshots=self.__get_snapshots()
-
-        # update self
-        #self.__update_edges()
-        self.static_edges=self.__get_static_edges()
+        self.snapshots=self.__update_snapshots()
             
         # transpose if network is directed
         if self.is_directed:
             for graphlet in self.snapshots:
                 self.__revert_snapshot(graphlet)
+        self.__update_edges()
+
+        self.static_edges=self.__get_static_edges()
 
     def __revert_snapshot(self,time):
         # reverts a single snapshot
@@ -225,14 +231,6 @@ class TemporalEdgeList():
                 #print 'remaining: ', iterations-i
 
         self.snapshots[time]=list(edges)
-
-    def __update_edges(self):
-        # reads snapshots and rewrites edgelist
-        new_edges=[]
-        for time in self.snapshots:
-            for u,v in self.snapshots[time]:
-                new_edges.append((u,v,time))
-        self.edges=new_edges
 
     def RE(self):
         # alias
