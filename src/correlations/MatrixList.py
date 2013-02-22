@@ -1,9 +1,4 @@
 #! /usr/bin/python
-import sys, os,itertools
-sys.path.insert(1, os.path.join(sys.path[0], os.pardir))
-import tools.filesystem as fs
-import tools.Gewindehammer_lonetop as gwh
-from tools.TemporalEdgeList import TemporalEdgeList
 
 from scipy.sparse import coo_matrix, csr_matrix, lil_matrix, dok_matrix
 import scipy.sparse as sp
@@ -13,7 +8,6 @@ from numpy import loadtxt, zeros, savetxt
 import scipy
 from random import sample
 from collections import defaultdict
-import gc
 import networkx as nx
 from scipy.io import mmread,mmwrite,loadmat,savemat
 import random
@@ -126,52 +120,11 @@ class AdjMatrixSequence(list):
         
         for i in range(start+twindow,len(self)-twindow,twindow):
             C=C*self[i]
-            links[i]=C.sum()
+            links[i]=C.nnz()
             if C.nnz==0: break
         
         return links
-        
-    def greedy_product_path(self,start=0):
-        """ Performs a greedy product path from start time.
-            This path is the sequence that maximizes the 2-graph edge density,
-            if memory effects are neclected.
-        """
-        max_days=[]
-        pos=start
-        day_density={}
-        
-        while pos<len(self):
-            dichte=[0 for i in range(pos+1)]
-            for i in range(pos+1,len(self)):
-                dichte.append((self[pos]*self[i]).sum())
-            
-            if max(dichte)==0: break
-            max_days.append(dichte.index(max(dichte)))
-            pos=max_days[-1]
-            
-            day_density[pos]=max(dichte)
-            
-        return day_density
-    
-
-    def nx_2correlation_tree(self):
-        """ returns acyclic networkx DiGraph with nodes as days and
-            2-correlations as edgeweights
-        
-        """
-        G=nx.DiGraph()
-        G.add_nodes_from([i for i in range(len(self))])
-        
-        for i in range(len(self)):
-            print i
-            for j in range(i,len(self)):
-                x=(self[i]*self[j]).sum()
-                if x>0:
-                    attr={}
-                    attr['corr']=x
-                    G.add_edge(i,j,attr)
-        return G
-        
+                
     def path_density_of_A(self,A):
         """ The path density of an Adjacency Matrix A """
         paths=0
@@ -233,32 +186,6 @@ class AdjMatrixSequence(list):
             da[i]=float(self[i].nnz)/norma
         
         return da
-    
-    def configuration_model(self,return_copy=False):
-        """ Reads AdjMatrixSequence Object and returns an edge randomized version.
-            Result is written to txt file.
-        """
-        if self.is_directed:
-            nx_creator=nx.DiGraph()
-        else:
-            nx_creator=nx.Graph()
-
-        if return_copy: x=self[:]
-        else: x=self
-        
-        #t_edges=[]
-        for i in range(len(self)):
-            print "configuration model: ",i
-            graphlet=nx.from_scipy_sparse_matrix(x[i],create_using=nx_creator)
-            graphlet=gwh.randomize_network(graphlet)
-            x[i]=nx.to_scipy_sparse_matrix(graphlet,dtype='int')
-            #for u,v in graphlet.edges():
-            #    t_edges.append((u,v,i))
-
-        #gwh.write_array(t_edges,"Configuration_model.txt")
-    
-        if return_copy: return x
-        else: return
 
     def time_shuffled(self,return_copy=False):
         """
@@ -376,22 +303,31 @@ class AdjMatrixSequence(list):
         """ writes self to txtfile.
             If network is undirected, edge-pairs appear twice.
             
-        """        
+        """
+        # generate edge list
         t_edges=[]
         for i in range(len(self)):
-            print "extracting edges ",i
+            #print "extracting edges ",i
             indices=zip(self[i].nonzero()[0],self[i].nonzero()[1])
             to_add=[(u,v,i) for u,v in indices]
             t_edges.extend(to_add)
-        
-        t_edges_clean=t_edges[:]
+
+        # edge list as set for file storage
+        t_edges_set=set(t_edges)        
+        # remove double edges, if undirected
         if not self.is_directed:
-            print "cleaning edgelist..."
-            for (u,v,d) in t_edges_clean:
-                if (v,u,d) in t_edges_clean:
-                    t_edges_clean.remove((v,u,d))
-        
-        gwh.write_array(t_edges_clean,fname)
+            print "removing bidirectional links..."
+            for (u,v,d) in t_edges:
+                if (v,u,d) in t_edges_set and (u,v,d) in t_edges_set:
+                    t_edges_set.remove((v,u,d))
+
+        # write file
+        g=file(fname,'w+')
+        for e in t_edges_set:
+            wstring=''
+            for j in range(1,len(e)): wstring += '\t'+str(e[j])
+            g.writelines(( str(e[0])+wstring+'\n' ))
+        g.close
         return
 
     def matricesCreation(self):
@@ -469,46 +405,12 @@ class AdjMatrixSequence(list):
 if __name__ == "__main__":
     from pprint import pprint
     
-    #At = AdjMatrixSequence(fs.dataPath("nrw_edges_01JAN2008_31DEC2009.txt"),directed=True)
-    At=AdjMatrixSequence(fs.dataPath("sociopatterns_hypertext_social_ijt.dat"),directed=False)
-    #At=AdjMatrixSequence(fs.dataPath("sexual_contacts.dat"),directed=False)
-    #At=AdjMatrixSequence("/Users/lentz/Desktop/Randomized_edges.txt",directed=True,firstday=0)
-    #At.time_shuffled()
-
-    #At = AdjMatrixSequence(fs.dataPath("T_edgelist.txt"),directed=True,columns=(0,1,3),write_label_file=True)
-    #At = AdjMatrixSequence(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010.txt"),directed=True,write_label_file=True)
+    At=AdjMatrixSequence("T_edgelist.txt",directed=False)
     print 'Hier ', len(At)
     c=At.unfold_accessibility()
-    #At=AdjMatrixSequence("Temp/Randomized_edges.txt",directed=True)
-    #C=At.cumulated(ende=308)
-    #mmwrite("Hit_aggregated_308.mtx",C)
-    #C=At.clustering_matrix(500)
-    #mmwrite("Clustering_Matrix_113.mtx",C)
-    #spd=At.static_path_density()
-    #gwh.dict2file(spd,"Static_path_density.txt")
-    #At.time_reversed()
-    #At.time_shuffled()
-    #At.write("Randomized/Time_reversed.txt")
-    #den=At.density()
     gwh.dict2file(c,"cumu.txt")
 
-    #E=TemporalEdgeList(fs.dataPath("T_edgelist.txt"),directed=True,timecolumn=3)
-    #E=TemporalEdgeList(fs.dataPath("sexual_contacts.dat"),directed=False)
-    #E=TemporalEdgeList(fs.dataPath("D_sw_uvd_01JAN2009_31MAR2010_matrixlabels.txt"),directed=True)
-    #E.shuffle_edge_times()
-    #E.random_times()
-    #E.random_times_uniform()
-    #E.randomize_edges()
-    #E.write("Randomized/Randomized_edges.txt")
 
-    #print 'Alle: ',len(At)
-    #A=At.cumulated()
-    #print A.nnz
-    
-    #At.write(
-    #fs.dataPath("sociopatterns_hypertext_social_ijt_matrixlabels.dat"))
-    
-    #At.configuration_model(True)
 
 
     
