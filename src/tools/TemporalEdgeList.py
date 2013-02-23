@@ -169,16 +169,13 @@ class TemporalEdgeList():
         gwh.write_array(self.edges,fname)
         return
 
-    def __randomize_graphlet(self,time,maxiterations=False):
+    def __randomize_graphlet(self,time,maxiterations=100):
         """
             Returns a randomized version of a graph or digraph.
             The degree sequence is conserved.
         """
         
-        if maxiterations:
-            iterations=maxiterations
-        else:
-            iterations=len(self.snapshots[time])*100
+        iterations=len(self.snapshots[time])*maxiterations
         
         def get_legal_edgepair(ed):
             # returns a disjoint pair of edges
@@ -232,11 +229,11 @@ class TemporalEdgeList():
 
         self.snapshots[time]=list(edges)
 
-    def RE(self):
+    def RE(self,maxiterations=100):
         # alias
-        self.randomize_edges()
+        self.randomize_edges(maxiterations)
     
-    def randomize_edges(self,maxiterations=False):
+    def randomize_edges(self,maxiterations=100):
         """ Edge randomization for each graphlet
         
         """
