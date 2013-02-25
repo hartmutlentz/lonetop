@@ -86,8 +86,6 @@ class TemporalEdgeList():
     
     def shuffle_snapshot_times(self):
         # shuffles all snapshots
-        #assert False, 'Debug me! Use AdjMatrixSequence instead.'
-        print "Edgelist.GST is not tested! Use AdjMatrixSequence instead."
     
         new_keys=(self.snapshots).keys()
         random.shuffle(new_keys)
@@ -131,15 +129,12 @@ class TemporalEdgeList():
     
     def time_reversal(self):
         # revert time stamps
-        #assert False, 'Debug me! Use AdjMatrixSequence instead.'
-        print "Edgelist.TR is not tested! Use AdjMatrixSequence instead."
         new_keys=range(self.mintime,self.maxtime+1)
 
         new_snapshots={}
         for i in self.possible_times:
-            new_snapshots[new_keys.pop()]=self.snapshots[i] # FIXME
+            new_snapshots[new_keys.pop()]=self.snapshots[i]
         
-        #self.snapshots=new_snapshots
         new_edges=[]
         for t in new_snapshots:
             for (u,v) in new_snapshots[t]:
@@ -152,8 +147,9 @@ class TemporalEdgeList():
         if self.is_directed:
             for graphlet in self.snapshots:
                 self.__revert_snapshot(graphlet)
-        self.__update_edges()
+            self.__update_edges()
 
+        # update static network
         self.static_edges=self.__get_static_edges()
 
     def __revert_snapshot(self,time):
