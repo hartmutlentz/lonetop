@@ -6,8 +6,11 @@ except: pass
 try: sys.path.append('/home/lentz/Documents/GitHub_locals/my_py') # Beta-Cl
 except: pass
 
-import Gewindehammer_lonetop as gwh
-import scipy as sc, networkx as nx, numpy as np, random
+import random
+import scipy as sc, numpy as np
+import networkx as nx # Optional
+import Gewindehammer as gwh # Optional
+
 
 class TemporalEdgeList():
     """ Class for temporal edgelists as triples (u,v,d),
@@ -143,27 +146,52 @@ class TemporalEdgeList():
         self.edges=new_edges
         self.snapshots=self.__update_snapshots()
             
-        # transpose if network is directed
+        # transpose, if network is directed
         if self.is_directed:
             for graphlet in self.snapshots:
-                self.__revert_snapshot(graphlet)
+                self.__revert_graphlet(graphlet)
             self.__update_edges()
 
         # update static network
         self.static_edges=self.__get_static_edges()
 
-    def __revert_snapshot(self,time):
-        # reverts a single snapshot
+    def __revert_graphlet(self,time):
+        # reverts/transposes a single snapshot
         edges=self.snapshots[time][:]        
         new_edges=[(v,u) for (u,v) in edges]    
         self.snapshots[time]=new_edges
-    
-    def write(self,fname):
-        """ writes self to txtfile
-            
+
+    def __graphlet_configuration_model(self,G_in):
+        """ Converts network input network into graph sequence and
+            generates new configuration graph.
+            Number of edges is not conserved!
         """
-        gwh.write_array(self.edges,fname)
-        return
+        if G_in.is_directed():
+            inseq=G_in.in_degree().values()
+            outseq=G_in.out_degree().values()
+            
+            H=nx.directed_configuration_model(inseq,outseq)
+            H=nx.DiGraph(H)
+            H.remove_edges_from(H.selfloop_edges())
+        
+        else:
+            seq=G_in.degree().values()
+            
+            H=nx.configuration_model(seq)
+            H=nx.Graph(H)
+            H.remove_edges_from(H.selfloop_edges())
+
+        return H.edges()
+    
+    def __graphlet_to_nx_graph(self,time):
+        """ Converts a snapshot to nx.(Di)Graph """
+        if self.is_directed:
+            G=nx.DiGraph()
+        else:
+            G=nx.Graph()
+
+        G.add_edges_from(self.snapshots[time])
+        return G
 
     def __randomize_graphlet(self,time,maxiterations=100):
         """
@@ -225,6 +253,20 @@ class TemporalEdgeList():
 
         self.snapshots[time]=list(edges)
 
+    def CM(self):
+        """ Configuration model.
+            Faster than RE, but number of edges is not conserved.
+            Use RE for small networks.
+        """
+        for t in range(self.timespan):
+            print "Configuration model for t= ",t+1," of ",self.timespan
+            new_edges=self.__graphlet_configuration_model\
+                (self.__graphlet_to_nx_graph(t))
+            self.snapshots[t]=new_edges
+    
+        self.__update_edges()
+        self.static_edges=self.__get_static_edges()
+
     def RE(self,maxiterations=100):
         # alias
         self.randomize_edges(maxiterations)
@@ -249,6 +291,13 @@ class TemporalEdgeList():
             nodes.append(v)
         nodes=set(nodes)
         return len(nodes)
+
+    def write(self,fname):
+        """ writes self to txtfile.
+            
+        """
+        gwh.write_array(self.edges,fname)
+        return
 
     def average_size(self):
         """ average edge density """
