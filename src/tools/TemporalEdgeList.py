@@ -258,8 +258,8 @@ class TemporalEdgeList():
             Faster than RE, but number of edges is not conserved.
             Use RE for small networks.
         """
-        for t in range(self.timespan):
-            print "Configuration model for t= ",t+1," of ",self.timespan
+        for i,t in enumerate(self.snapshots):
+            print "Configuration model for t= ",i," of ",self.timespan
             new_edges=self.__graphlet_configuration_model\
                 (self.__graphlet_to_nx_graph(t))
             self.snapshots[t]=new_edges
@@ -274,11 +274,9 @@ class TemporalEdgeList():
     def randomize_edges(self,maxiterations=100):
         """ Edge randomization for each graphlet
         
-        """
-        timespan=self.timespan
-        
+        """        
         for i,j in enumerate(self.snapshots):#range(self.maxtime):
-            print "Randomizing ",i," of ",timespan
+            print "Randomizing ",i," of ",self.timespan
             self.__randomize_graphlet(j,maxiterations)
         self.__update_edges()
         self.static_edges=self.__get_static_edges()
