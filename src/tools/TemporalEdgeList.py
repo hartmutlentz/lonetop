@@ -189,7 +189,7 @@ class TemporalEdgeList():
             G=nx.DiGraph()
         else:
             G=nx.Graph()
-
+        G.add_nodes_from(self.nodes())
         G.add_edges_from(self.snapshots[time])
         return G
 
@@ -253,6 +253,10 @@ class TemporalEdgeList():
 
         self.snapshots[time]=list(edges)
 
+    def configuration_model(self):
+        # alias
+        self.CM()
+    
     def CM(self):
         """ Configuration model.
             Faster than RE, but number of edges is not conserved.
@@ -282,13 +286,16 @@ class TemporalEdgeList():
         self.static_edges=self.__get_static_edges()
 
     def number_of_nodes(self):
-        # the number of nodes
+        return len(self.nodes)
+    
+    def nodes(self):
+        # the nodes of the network as set.
         nodes=[]
         for (u,v) in self.static_edges:
             nodes.append(u)
             nodes.append(v)
         nodes=set(nodes)
-        return len(nodes)
+        return nodes
 
     def write(self,fname):
         """ writes self to txtfile.
