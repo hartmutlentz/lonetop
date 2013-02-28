@@ -100,18 +100,7 @@ class AdjMatrixSequence(list):
             return float(nlinks)/(float((n-2)*(n**2-n))+float(n**2-n))
         else:
             return float(nlinks)/float((n**2-n))
-        
-    def matrix_density(self,A):
-        # density of a matrix, weights are ignored.
-        n=float(scipy.shape(A)[0])
-        e=float(A.nnz)
-        return e/(n*(n-1.0))        
     
-    def density(self):
-        # densities of all matrices as list. weights are ignored.
-        dens=[self.matrix_density(a) for a in self]
-        return dens
-
     def deep_product(self,twindow=1,start=0):
         """ Product A_1*A_7*A_14... """
         C=self[start].copy()
@@ -124,7 +113,33 @@ class AdjMatrixSequence(list):
             if C.nnz==0: break
         
         return links
-                
+
+    def __matrix_mean_degree(self,A):
+        """ the mean degree of A. """
+        return float(A.nnz)/(self.number_of_nodes-1)
+    
+    def __matrix_LCC_size(self,A):
+        """ The size of the L(S)CC of a matrix.
+            Note that the matrices here are interpreted as (bi)directed nets.
+        """
+        n,l=sp.csgraph.connected_components(A,connection='strong')
+        lcc_size=np.max(np.bincount(l))
+        if lcc_size==1:
+            return 0.0
+        else:
+            return lcc_size/float(self.number_of_nodes)
+
+    def LCCs(self):
+        """ returns information about the size of the LCC and the mean degree
+            of the snapshots.
+        """
+        crit={}
+        for i,M in enumerate(self):
+            print "LCC ",i
+            crit[i]=(self.__matrix_mean_degree(M),self.__matrix_LCC_size(M))
+
+        return crit            
+    
     def path_density_of_A(self,A):
         """ The path density of an Adjacency Matrix A """
         paths=0
