@@ -246,8 +246,11 @@ class AdjMatrixSequence(list):
         
     def as_undirected(self):
         """ makes every matrix in self symmetric. """
-        for i in range(len(self)):
-            self[i]=self.symmetrize_matrix(self[i])
+        if self.is_directed:
+            for i in range(len(self)):
+                self[i]=self.symmetrize_matrix(self[i])
+        else:
+            raise NotImplementedError, "Network is already undirected."
 
     def clustering_matrix2vector(self,in_file):
         """ Reads file and returns vector from matrix """
@@ -270,8 +273,6 @@ class AdjMatrixSequence(list):
     def __consume(iterator, n):
         """ Advance the iterator n-steps ahead. If n is none, consume entirely.
             alternative Generator.next() usage: x=my_gnerator; next(x,'finished')
-            
-            
         """
         # Use functions that consume iterators at C speed.
         if n is None:
@@ -412,7 +413,7 @@ class AdjMatrixSequence(list):
                 P=P+P*self[i]
             except:
                 print 'Break at t = ',i
-                pass
+                break
         else:
             print '---> Unfolding complete.'
                     
