@@ -17,12 +17,12 @@ class AdjMatrixSequence(list):
     """
     list of sparse matrixes
 
-    class inherits from list -> has all properties of list
+    class inherits from list.
     the constructor expects filename of u,v,w,d-edgelist
 
     it constructs a list, where each entry is
     a sparse matrix (default: csr)
-    the matrixes in the list are ordered by day
+    the matrices in the list are ordered by day
 
     the indices of the matrix represent the nodes, but
     nodes are reindexed to [0..number_of_nodes]
@@ -246,11 +246,12 @@ class AdjMatrixSequence(list):
         
     def as_undirected(self):
         """ makes every matrix in self symmetric. """
-        if self.is_directed:
-            for i in range(len(self)):
-                self[i]=self.symmetrize_matrix(self[i])
-        else:
-            raise NotImplementedError, "Network is already undirected."
+        #if self.is_directed:
+        for i in range(len(self)):
+            self[i]=self.symmetrize_matrix(self[i])
+        self.is_directed=False
+        #else:
+        #    raise NotImplementedError, "Network is already undirected."
 
     def clustering_matrix2vector(self,in_file):
         """ Reads file and returns vector from matrix """

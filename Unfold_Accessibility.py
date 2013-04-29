@@ -28,10 +28,21 @@ if __name__=="__main__":
     
     the_file='data/T_edgelist.txt'
     At=AdjMatrixSequence(the_file,directed=True,write_label_file=False)
-    c=At.unfold_accessibility()
-    h=gwh.cdf2histogram(c)
-    gwh.dict2file(c,"cumu.txt")
-    gwh.dict2file(h,"histo.txt")
+    P,c=At.unfold_accessibility(return_accessibility_matrix=True)
+    #h=gwh.cdf2histogram(c)
+    #gwh.dict2file(c,"cumu.txt")
+    #gwh.dict2file(h,"histo.txt")
+    vir=P.sum(axis=1)
+    vul=P.sum(axis=0)
+    
+    vir_a=np.squeeze(np.asarray(vir))
+    vul_a=np.squeeze(np.asarray(vul))
+    
+    h_vir=np.bincount(vir_a)
+    h_vul=np.bincount(vul_a)
+    
+    gwh.dict2file(h_vir,"virulence_histo.txt")
+    gwh.dict2file(h_vul,"vulnerability_histo.txt")
 
     
     # Randomized versions of the temporal network
