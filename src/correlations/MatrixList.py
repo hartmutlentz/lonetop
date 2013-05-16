@@ -252,6 +252,11 @@ class AdjMatrixSequence(list):
         self.is_directed=False
         #else:
         #    raise NotImplementedError, "Network is already undirected."
+    
+    def to_dok(self):
+        """ converts every matrix to dok type as needed for map-reduce-processing. """
+        for i in range(len(self)):
+            self[i]=self[i].todok()
 
     def clustering_matrix2vector(self,in_file):
         """ Reads file and returns vector from matrix """
@@ -430,10 +435,13 @@ class AdjMatrixSequence(list):
 if __name__ == "__main__":
     from pprint import pprint
     
-    At=AdjMatrixSequence("T_edgelist.txt",directed=False)
+    At=AdjMatrixSequence("/Users/lentz/Documents/GitHub_locals/lonetop/data/T_edgelist.txt",directed=False)
     print 'Hier ', len(At)
-    c=At.unfold_accessibility()
-    gwh.dict2file(c,"cumu.txt")
+    #c=At.unfold_accessibility()
+    print type(At[0])
+    At.to_dok()
+    print '\n',type(At[0])
+    #gwh.dict2file(c,"cumu.txt")
 
 
 
