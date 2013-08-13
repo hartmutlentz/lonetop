@@ -12,6 +12,8 @@ import networkx as nx
 from scipy.io import mmread,mmwrite,loadmat,savemat
 import random
 
+from MapReduceMatrixProduct import mr_matrix_product,dict_to_dok
+
 
 class AdjMatrixSequence(list):
     """
@@ -402,7 +404,7 @@ class AdjMatrixSequence(list):
         M=M.astype('bool')
         M=M.astype('i')
 
-    def unfold_accessibility(self,return_accessibility_matrix=False):
+    def unfold_accessibility(self,return_accessibility_matrix=False,use_MR=False):
         """ Unfold accessibility storing path density.
         
         """
@@ -410,18 +412,33 @@ class AdjMatrixSequence(list):
         D=sp.identity(self.number_of_nodes,dtype=np.int32)
         P=P+D
         cumu=[P.nnz]
-        
-        for i in range(1,len(self)):
-            print 'unfolding accessibility',i,'non-zeros: ',P.nnz
-            self.bool_int_matrix(P)
-            cumu.append(P.nnz)
-            try:
-                P=P+P*self[i]
-            except:
-                print 'Break at t = ',i
-                break
+        if use_MR:
+            P=P.todok()
+            self.to_dok()
+            for i in range(1,len(self)):
+                print 'unfolding accessibility',i,'non-zeros: ',P.nnz
+                self.bool_int_matrix(P)
+                cumu.append(P.nnz)
+                #try:
+                A_n = dict_to_dok(mr_matrix_product(P,self[i]),dim=self.number_of_nodes)
+                P=P+A_n #mr_matrix_product(P,self[i])
+                #except:
+                #    print 'Break at t = ',i
+                #    break
+            else:
+                print '---> Unfolding complete.'
         else:
-            print '---> Unfolding complete.'
+            for i in range(1,len(self)):
+                print 'unfolding accessibility',i,'non-zeros: ',P.nnz
+                self.bool_int_matrix(P)
+                cumu.append(P.nnz)
+                try:
+                    P=P+P*self[i]
+                except:
+                    print 'Break at t = ',i
+                    break
+            else:
+                print '---> Unfolding complete.'
                     
         if return_accessibility_matrix:
             P = P.astype('bool')
