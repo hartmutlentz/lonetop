@@ -29,7 +29,7 @@ class LeslieSequence(list):
 
     def __init__(self, matrices, tau=3):
         assert tau < len(
-            matrices), "Infectious period greater than observation time."
+            matrices), "Infectious period must not exceed observation time."
         list.__init__(self)
 
         self.extend(matrices)
